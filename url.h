@@ -1,3 +1,6 @@
+#ifndef _URL_H_
+#define _URL_H_
+
 #include <string>
 #include <list>
 
@@ -13,6 +16,10 @@ private:
 
 public:  
     void push();
-    string get_mask(string sessionId);
-    string get_login(string u, string p);
+    string get_grid(string deviceId);
+
+    string get_login(string u, string p); //TODO remove
 };
+
+
+#endif // _URL_H_

@@ -2,58 +2,25 @@
 
 #include <opencv/highgui.h>
 #include <opencv/cv.h>
-#include <list>
 #include <iostream>
 #include <time.h>
+#include <stdlib.h>
 #include "url.h"
+#include "gridmask.h"
+#include "base.h"
 
 
 using namespace cv;
 using namespace std;
 
-typedef list< pair<int,int> > MaskInput;
 
-
-
-
-class Mask
-{
-    private:
-    Size size;
-    Mat mask;
-    MaskInput mi;
-
-    public:
-    Mask() {};
-    Mask(Size size, MaskInput mi)
-    {
-        this->size = size;
-        this->mi = mi;
-    }
-    void build(Size frameSize) 
-    {
-        mask = Mat::zeros(frameSize, CV_8UC1);
- 		int row_size = frameSize.height / size.height;
-		int col_size = frameSize.width / size.width;
-        for(MaskInput::iterator i=mi.begin(); i!=mi.end(); i++)
-        {
-            int x = (*i).first;
-            int y = (*i).second;
-            Mat roi(mask, Rect(col_size*x, row_size*y, col_size, row_size));
-            roi = Scalar(255);           
-        }     
-    }
-    Mat get() 
-    {
-        return this->mask;
-    };
-};
 
 class MotionDetector
 {
     private:
         Mat prevFrame;
-        Mask mask;
+        GridMask mask;
+        Url url;
         Mat diff;
         time_t last_detected;
 
@@ -63,15 +30,12 @@ class MotionDetector
         void process(InputArray input);
 
 	public:
-	    static const int ROWS = 9;
-	    static const int COLS = 16;
-
+        MotionDetector(Url& url, GridMask& gridmask) {
+            this->url = url;
+            this->mask = gridmask;
+        };
         void setStream(string streamUrl) {
             this->streamUrl = streamUrl;
-        };
-        void setMask(Mask & mask)
-        {
-            this->mask = mask;
         };
         void run();
 };
@@ -82,11 +46,10 @@ VideoCapture MotionDetector::createCapture()
     VideoCapture cap(streamUrl);
     if ( !cap.isOpened() )
     {
-        cout << "Cannot open the video stream" << endl;
-        exit(2);
+        LOG.error("Cannot open the video stream");
+        exit(1);
     }
     double fps = cap.get(CV_CAP_PROP_FPS); 
-    cout << "Frame per seconds : " << fps << endl;
     return cap;
 }
 
@@ -110,14 +73,15 @@ void MotionDetector::process(InputArray inputFrame)
     Mat filtered;
     diff.copyTo(filtered, mask.get());
 
-    imshow("MD window", filtered);
+    //imshow("MD window", filtered);
     int nonZero = countNonZero(filtered);
     if (nonZero > 0) 
     {
         time_t now = time(NULL);
         if (now - last_detected > 5) 
         {
-             printf("!!!!\n");
+             //url.push();
+             LOG.debug(">>>>>>> detected");
              last_detected = now;
         }
     }
@@ -129,7 +93,7 @@ void MotionDetector::run()
     {
         last_detected = time(NULL);
         VideoCapture cap = createCapture();
-        namedWindow("MD window", WINDOW_AUTOSIZE); 
+        //namedWindow("MD window", WINDOW_AUTOSIZE); 
 
         Mat frame;
         int skip = 0;
@@ -153,37 +117,34 @@ void MotionDetector::run()
     catch( cv::Exception& e )
     {
         const char* err_msg = e.what();
-        std::cout << "OpenCV exception: " << err_msg << std::endl;
+        LOG.error("OpenCV exception: %s", err_msg);
     }
 }
 
 
 
-MaskInput buildMi()
+
+int main(int argc, char**argv) 
 {
-    MaskInput mi;
-    pair<int, int> item;
-    for (int i = 0; i < 8; i++) 
+    configure_log();
+	LOG.info("System start");
+
+    //get the device name from argv
+    if (argc < 2) 
     {
-        for (int j = 0; j < i+5; j++) 
-        {
-            item.first = j; item.second = i;    mi.push_back(item);
-        }
+        cout  << "MotDet Error: Wrong command line" << endl;
+        exit(1);
     }
-    return mi; 
-}
+    string deviceId(argv[1]);
 
-
-int main() 
-{
+    //get gridmask
     Url url;
-    string sid = url.get_login("erik100", "pw");  
-    cout << "SID:" << sid << endl;
+    string grid = url.get_grid(deviceId);  
+    GridMask mask = GridMask::create(grid);
 
-    MotionDetector md = MotionDetector();
-    md.setStream("rtmp://192.168.2.100/rtmp/live");
-    Mask mask( Size(16, 9), buildMi() );
-    md.setMask( mask );
+    //start deamon 
+    MotionDetector md = MotionDetector(url, mask);
+    md.setStream("rtmp://localhost/rtmp/live");
 	md.run();
 }
 
