@@ -37,12 +37,14 @@ void GridMask::build(Size frameSize)
     }     
 }
 
-GridMask GridMask::create(string json)
+GridMask GridMask::create(string sRoot)
 {
-    Json::Value jvalue = json_parse(json);
-    Json::Value device = jvalue["device"];
+    Json::Value jRoot = json_parse(sRoot);
+    Json::Value device = jRoot["device"];
     int code = jvalue.get("code", 0).asInt();
-    Json::Value ds = device.get("deviceSetup", "");//.asString();
+    string jsonDeviceSetup = device.get("deviceSetup", "");//.asString();
+    Json::Value
+
     int r = ds.get("rows",101).asInt();
 
 cout << "msg:" << r << endl;
