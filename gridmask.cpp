@@ -40,7 +40,15 @@ void GridMask::build(Size frameSize)
 GridMask GridMask::create(string json)
 {
     Json::Value jvalue = json_parse(json);
-    Size size(jvalue.get("cols", 0).asInt(), jvalue.get("rows", 0).asInt());   
+    Json::Value device = jvalue["device"];
+    int code = jvalue.get("code", 0).asInt();
+    Json::Value ds = device.get("deviceSetup", "");//.asString();
+    int r = ds.get("rows",101).asInt();
+
+cout << "msg:" << r << endl;
+
+    Json::Value motion_grid = device["motion_grid"];
+    Size size(motion_grid.get("columnss", 0).asInt(), motion_grid.get("rows", 0).asInt());   
         
     Json::Value selections = jvalue["selections"];
     MaskInput mi;

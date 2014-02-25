@@ -139,13 +139,17 @@ int main(int argc, char**argv)
 
     //get gridmask
     Url url;
-    string grid = url.get_grid(deviceId);  
+    string grid = url.get_grid(deviceId);
+
+//cout << "asgjagdjagdjagdjagd" << grid << endl;
+
+  
     GridMask mask = GridMask::create(grid);
 
     //start deamon 
-    MotionDetector md = MotionDetector(url, mask);
-    md.setStream("rtmp://localhost/rtmp/live");
-	md.run();
+    //MotionDetector md = MotionDetector(url, mask);
+    //md.setStream("rtmp://localhost/rtmp/live");
+	//md.run();
 }
 
 
