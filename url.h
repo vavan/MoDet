@@ -11,7 +11,7 @@ using namespace std;
 class Url
 {
 private:
-    string execute(list<string> headers, string url, string json);
+    string execute(list<string> headers, string url, string json, bool post = true);
 
 
 public:  

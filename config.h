@@ -20,7 +20,7 @@ public:
 };
 
 
-void init_log();
+void init_log(int pid, std::string deviceId);
 
 
 #endif /* CONFIG_H_ */

@@ -5,10 +5,10 @@
 #include <iostream>
 #include <time.h>
 #include <stdlib.h>
-#include <sstream>
 #include "url.h"
 #include "gridmask.h"
 #include "config.h"
+#include "process.h"
 
 
 using namespace cv;
@@ -26,9 +26,9 @@ class MotionDetector
         time_t last_detected;
         string deviceId;
 
-        static const int timeout = 5;
-        static const int leap = 5;
-        static const bool show = true;
+        int timeout;
+        int leap;
+        bool show;
 
 
         string streamUrl;
@@ -37,10 +37,7 @@ class MotionDetector
         void detected(time_t timestamp, Mat& frame);
 
 	public:
-        MotionDetector(Url& url, GridMask& gridmask) {
-            this->url = url;
-            this->mask = gridmask;
-        };
+        MotionDetector(Url& url, GridMask& gridmask);
         void setStream(string streamUrl) {
             this->streamUrl = streamUrl;
         };
@@ -48,6 +45,14 @@ class MotionDetector
         	this->deviceId = deviceId;
         }
         void run();
+};
+
+MotionDetector::MotionDetector(Url& url, GridMask& gridmask) {
+    this->url = url;
+    this->mask = gridmask;
+    this->show = MDConfig::getRoot()["main"]["show"];
+    this->timeout = MDConfig::getRoot()["main"]["timeout"];
+    this->leap = MDConfig::getRoot()["main"]["leap"];
 };
 
 
@@ -76,7 +81,6 @@ string get_time(time_t timestamp)
 void MotionDetector::detected(time_t timestamp, Mat& frame)
 {
 	LOG.debug("!!! Motion detected");
-
 	url.push(get_time(timestamp), deviceId, "");
 }
 
@@ -121,7 +125,7 @@ void MotionDetector::run()
 
         Mat frame;
         int skip = 0;
-        while(1)
+        while(!terminated)
         {
             if (!cap.grab()) break;
             if (skip++ > leap)
@@ -145,33 +149,47 @@ void MotionDetector::run()
     }
 }
 
+
+
 int main(int argc, char**argv) 
 {
-    init_log();
-	LOG.info("System start");
-
-	MDConfig::init();
-
 	//get the device name from argv
-    if (argc < 3)
-    {
-        cerr  << "MotDet Error: Wrong command line" << endl;
+    if (argc < 4) {
+        cerr  << "MotDet Error: Wrong command line. USE modet <start|stop> <deviceId> <sessionId>" << endl;
         exit(1);
     }
-    string deviceId(argv[1]);
-    string sessionId(argv[2]);
+    string mode(argv[1]);
+    string deviceId(argv[2]);
+    string sessionId(argv[3]);
 
-    //get gridmask
-    Url url;
-    string grid = url.get_grid(deviceId, sessionId);
-    GridMask mask = GridMask::create(grid);
 
-    //start deamon 
-    MotionDetector md = MotionDetector(url, mask);
-    string stream = MDConfig::getRoot()["stream"]["url"];
-    md.setStream(stream + "/" + deviceId);
-    md.setDeviceId(deviceId);
-	md.run();
+    if (mode == "start") {
+		int pid = start_process();
+	    init_log(pid, deviceId);
+		LOG.info("Start instance");
+		MDConfig::init();
+
+		//get gridmask
+		Url url;
+		string grid = url.get_grid(deviceId, sessionId);
+		GridMask mask = GridMask::create(grid);
+
+		//start deamon
+		MotionDetector md = MotionDetector(url, mask);
+		string stream = MDConfig::getRoot()["stream"]["url"];
+		md.setStream(stream);// + "/" + deviceId);
+		md.setDeviceId(deviceId);
+		md.run();
+
+		LOG.info("Stop instance");
+    } else if (mode == "stop") {
+	    init_log(0, deviceId);
+		LOG.info("Kill instance");
+		stop_process(deviceId);
+    } else {
+        cerr  << "MotDet Error: Wrong MODE. Should be start or stop" << endl;
+        exit(1);
+    }
 	return 0;
 }
 

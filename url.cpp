@@ -14,7 +14,7 @@ size_t url_write_callback(void *ptr, size_t size, size_t count, void *stream)
   return size*count;
 }
 
-string Url::execute(list<string> headers, string url, string json)
+string Url::execute(list<string> headers, string url, string json, bool post)
 {
     CURL *curl;
     string response;
@@ -34,8 +34,12 @@ string Url::execute(list<string> headers, string url, string json)
         curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headerlist);
         curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
         curl_easy_setopt(curl, CURLOPT_POSTFIELDS, json.c_str());
-        curl_easy_setopt(curl, CURLOPT_HTTPGET, 1L);
-        //curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
+        if (post)
+            curl_easy_setopt(curl, CURLOPT_POST, 1L);
+        else
+        	curl_easy_setopt(curl, CURLOPT_HTTPGET, 1L);
+        bool verbose = MDConfig::getRoot()["main"]["verbose"];
+        if (verbose) curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, url_write_callback);
         curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
 
@@ -54,11 +58,11 @@ string Url::execute(list<string> headers, string url, string json)
 
 
 void Url::push(string time, string deviceId, string picture) {
-	const string json = "{'channels': ['all'], 'data': {"
-			"'alert': 'Motion detected!'"
-			",'time: "+time+","
-			",'device': "+deviceId+
-			",'picture': "+picture+"}}";
+	const string json = "{\"channels\": [\"all\"], \"data\": {"
+			"\"alert\": \"Motion detected!\""
+			",\"time\": \""+time+"\""
+			",\"device\": \""+deviceId+"\""+
+			",\"picture\": \""+picture+"\"}}";
 
 	libconfig::Setting& push_cfg = MDConfig::getRoot()["push"];
 
@@ -70,10 +74,14 @@ void Url::push(string time, string deviceId, string picture) {
 	for (int i = 0; i < count; ++i) {
 		string header = headers_cfg[i];
 		headers.push_back(header);
+		LOG.debugStream() << "Push header: " << header;
 	}
 	headers.push_back("Content-Type: application/json");
 
-	this->execute(headers, url, json);
+	LOG.debugStream() << "Push json: " << json;
+	LOG.debugStream() << "Push to url: " << url;
+	string response = this->execute(headers, url, json);
+	LOG.debugStream() << "Response: " << response;
 }
 
 string Url::get_grid(string deviceId, string sessionid)
@@ -87,7 +95,7 @@ string Url::get_grid(string deviceId, string sessionid)
     headers.push_back("Content-Type: application/json");
     headers.push_back("sessionid:" + sessionid);
 
-    return this->execute(headers, url, "");
+    return this->execute(headers, url, "", false);
 }
 
 

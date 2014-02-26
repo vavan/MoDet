@@ -6,7 +6,8 @@ OBJ_FILES := \
     bin/main.o \
     bin/url.o \
     bin/gridmask.o \
-    bin/config.o
+    bin/config.o \
+    bin/process.o
 
 debug: CFLAGS += -g -O0 -Wall -Wextra
 debug: $(TARGET)
@@ -27,7 +28,12 @@ clean:
 
 
 deploy:
-	scp $(TARGET) vtymoshchuk@71.96.94.69:/home/vtymoshchuk/
-	scp $(TARGET).cfg vtymoshchuk@71.96.94.69:/home/vtymoshchuk/
+	rm -rf tmp
+	mkdir tmp
+	cp $(TARGET) tmp/
+	cp modet.cfg tmp/
+	cd tmp && tar -czf modet.tgz *
+	scp tmp/modet.tgz vtymoshchuk@71.96.94.69:/home/vtymoshchuk/
+
 
 
