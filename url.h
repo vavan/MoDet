@@ -15,8 +15,8 @@ private:
 
 
 public:  
-    void push();
-    string get_grid(string deviceId);
+    void push(string time, string deviceId, string stream);
+    string get_grid(string deviceId, string sessionid);
 
     string get_login(string u, string p); //TODO remove
 };

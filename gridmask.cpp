@@ -3,6 +3,7 @@
 #include <opencv/cv.h>
 #include "json/json.h"
 #include "gridmask.h"
+#include "config.h"
 
 using namespace cv;
 using namespace std;
@@ -15,8 +16,7 @@ Json::Value json_parse(std::string raw_data)
 
     if ( !reader.parse( raw_data, root ) )
     {
-        std::cout  << "MotDet Error: Json parsing:" << std::endl
-                   << reader.getFormattedErrorMessages();
+        LOG.error("Json parsing error: "+reader.getFormattedErrorMessages());
         exit(1);
     }
     return root;
@@ -28,6 +28,7 @@ void GridMask::build(Size frameSize)
     mask = Mat::zeros(frameSize, CV_8UC1);
 	int row_size = frameSize.height / size.height;
 	int col_size = frameSize.width / size.width;
+
     for(MaskInput::iterator i=mi.begin(); i!=mi.end(); i++)
     {
         int x = (*i).first;
@@ -39,30 +40,39 @@ void GridMask::build(Size frameSize)
 
 GridMask GridMask::create(string sRoot)
 {
-    Json::Value jRoot = json_parse(sRoot);
-    Json::Value device = jRoot["device"];
-    int code = jvalue.get("code", 0).asInt();
-    string jsonDeviceSetup = device.get("deviceSetup", "");//.asString();
-    Json::Value
+    Json::Value root = json_parse(sRoot);
+    Json::Value device = root["device"];
+    int code = root.get("code", 0).asInt();
+    string sDeviceSetup = device.get("deviceSetup", "").asString();
+    Json::Value deviceSetup = json_parse(sDeviceSetup);
+    Json::Value motionGrid = deviceSetup["motion_grid"];
+    Json::Value selections = motionGrid["selections"];
+    int width = motionGrid.get("columns", 0).asInt();
+    int height = motionGrid.get("rows", 0).asInt();
 
-    int r = ds.get("rows",101).asInt();
+    LOG.debug("Grid %d x %d. Selected %d cells", width, height, selections.size());
 
-cout << "msg:" << r << endl;
-
-    Json::Value motion_grid = device["motion_grid"];
-    Size size(motion_grid.get("columnss", 0).asInt(), motion_grid.get("rows", 0).asInt());   
-        
-    Json::Value selections = jvalue["selections"];
     MaskInput mi;
     pair<int, int> item;
-    for ( int i = 0; i < selections.size(); ++i )
-    {
-        item.first = selections[i].get("cols", 0).asInt();
-        item.second = selections[i].get("rows", 0).asInt();
-        mi.push_back(item);
-    }
-
-    return GridMask( size, mi ); 
+	for ( int i = 0; i < selections.size(); ++i )
+	{
+       item.first = selections[i].get("col", 0).asInt();
+       item.second = selections[i].get("row", 0).asInt();
+       mi.push_back(item);
+	}
+    return GridMask( Size(width, height), mi );
 }
 
 
+/*
+ * {"device":
+ * 	{"id":1,"deviceId":"8484","device_type":"camera","deviceSetup":
+ *		"{\"motion_grid\" :
+ *			{\"selections\":[{\"row\":1,\"col\":1},{\"row\":2,\"col\":1},{\"row\":3,\"col\":1},{\"row\":4,\"col\":1},{\"row\":1,\"col\":2},{\"row\":2,\"col\":2},{\"row\":3,\"col\":2},{\"row\":4,\"col\":2},{\"row\":1,\"col\":3},{\"row\":2,\"col\":3},{\"row\":3,\"col\":3},{\"row\":4,\"col\":3},{\"row\":1,\"col\":4},{\"row\":2,\"col\":4},{\"row\":3,\"col\":4},{\"row\":4,\"col\":4}],
+ *			 \"columns\":10,\"rows\":6
+*			}
+*		}",
+*		"status":true
+*	},"code":0,"message":"Get Device is success.."}
+ *
+ */

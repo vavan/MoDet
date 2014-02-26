@@ -5,9 +5,10 @@
 #include <iostream>
 #include <time.h>
 #include <stdlib.h>
+#include <sstream>
 #include "url.h"
 #include "gridmask.h"
-#include "base.h"
+#include "config.h"
 
 
 using namespace cv;
@@ -23,11 +24,17 @@ class MotionDetector
         Url url;
         Mat diff;
         time_t last_detected;
+        string deviceId;
+
+        static const int timeout = 5;
+        static const int leap = 5;
+        static const bool show = true;
 
 
         string streamUrl;
         VideoCapture createCapture();
         void process(InputArray input);
+        void detected(time_t timestamp, Mat& frame);
 
 	public:
         MotionDetector(Url& url, GridMask& gridmask) {
@@ -37,6 +44,9 @@ class MotionDetector
         void setStream(string streamUrl) {
             this->streamUrl = streamUrl;
         };
+        void setDeviceId(string deviceId) {
+        	this->deviceId = deviceId;
+        }
         void run();
 };
 
@@ -53,38 +63,52 @@ VideoCapture MotionDetector::createCapture()
     return cap;
 }
 
+string get_time(time_t timestamp)
+{
+	//"2014-02-02 20:15:20"
+	char buffer[20];
+	tm* l= gmtime(&timestamp);
+	strftime(buffer, 32, "%Y-%m-%d %H:%M:%S", l);
+	string str(buffer);
+	return str;
+}
+
+void MotionDetector::detected(time_t timestamp, Mat& frame)
+{
+	LOG.debug("!!! Motion detected");
+
+	url.push(get_time(timestamp), deviceId, "");
+}
 
 void MotionDetector::process(InputArray inputFrame) 
 {
-    Mat currFrame = inputFrame.getMat();
+	Mat currFrameColor = inputFrame.getMat();
+	Mat currFrame;
 
-    GaussianBlur(currFrame, currFrame, Size(9, 9), 2);
-    cvtColor(currFrame, currFrame, CV_RGB2GRAY);
+	GaussianBlur(currFrame, currFrame, Size(9, 9), 2);
+	cvtColor(currFrameColor, currFrame, CV_RGB2GRAY);
 
-    if (prevFrame.empty()) {
-        currFrame.copyTo(prevFrame);
-        return;
-    }
+	if (prevFrame.empty()) {
+		currFrame.copyTo(prevFrame);
+		return;
+	}
 
-    absdiff(prevFrame, currFrame, diff);
-    threshold(diff, diff, 30, 255, THRESH_BINARY);
-    currFrame.copyTo(prevFrame);
+	absdiff(prevFrame, currFrame, diff);
+	threshold(diff, diff, 30, 255, THRESH_BINARY);
+	currFrame.copyTo(prevFrame);
 
-    Mat filtered;
-    diff.copyTo(filtered, mask.get());
+	Mat filtered;
+	diff.copyTo(filtered, mask.get());
 
-    //imshow("MD window", filtered);
-    int nonZero = countNonZero(filtered);
-    if (nonZero > 0) 
-    {
-        time_t now = time(NULL);
-        if (now - last_detected > 5) 
-        {
-             //url.push();
-             LOG.debug(">>>>>>> detected");
-             last_detected = now;
-        }
-    }
+	if (show) imshow("MD window", filtered);
+	int nonZero = countNonZero(filtered);
+	if (nonZero > 0) {
+		time_t now = time(NULL);
+		if (now - last_detected > timeout) {
+			detected(now, currFrameColor);
+			last_detected = now;
+		}
+	}
 }
 
 void MotionDetector::run() 
@@ -93,14 +117,14 @@ void MotionDetector::run()
     {
         last_detected = time(NULL);
         VideoCapture cap = createCapture();
-        //namedWindow("MD window", WINDOW_AUTOSIZE); 
+        if (show) namedWindow("MD window", WINDOW_AUTOSIZE);
 
         Mat frame;
         int skip = 0;
         while(1)
         {
             if (!cap.grab()) break;
-            if (skip++ > 5) 
+            if (skip++ > leap)
             {
                 if (!cap.retrieve(frame)) break;
 
@@ -121,35 +145,34 @@ void MotionDetector::run()
     }
 }
 
-
-
-
 int main(int argc, char**argv) 
 {
-    configure_log();
+    init_log();
 	LOG.info("System start");
 
-    //get the device name from argv
-    if (argc < 2) 
+	MDConfig::init();
+
+	//get the device name from argv
+    if (argc < 3)
     {
-        cout  << "MotDet Error: Wrong command line" << endl;
+        cerr  << "MotDet Error: Wrong command line" << endl;
         exit(1);
     }
     string deviceId(argv[1]);
+    string sessionId(argv[2]);
 
     //get gridmask
     Url url;
-    string grid = url.get_grid(deviceId);
-
-//cout << "asgjagdjagdjagdjagd" << grid << endl;
-
-  
+    string grid = url.get_grid(deviceId, sessionId);
     GridMask mask = GridMask::create(grid);
 
     //start deamon 
-    //MotionDetector md = MotionDetector(url, mask);
-    //md.setStream("rtmp://localhost/rtmp/live");
-	//md.run();
+    MotionDetector md = MotionDetector(url, mask);
+    string stream = MDConfig::getRoot()["stream"]["url"];
+    md.setStream(stream + "/" + deviceId);
+    md.setDeviceId(deviceId);
+	md.run();
+	return 0;
 }
 
 
