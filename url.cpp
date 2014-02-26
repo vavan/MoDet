@@ -84,16 +84,22 @@ void Url::push(string time, string deviceId, string picture) {
 	LOG.debugStream() << "Response: " << response;
 }
 
-string Url::get_grid(string deviceId, string sessionid)
+string Url::get_grid(string deviceId, string sessionId)
 {
+	if (sessionId.empty()) {
+		string s = MDConfig::getRoot()["gridmask"]["sid"];
+		sessionId = s;
+	}
+
 	string urlBase = MDConfig::getRoot()["gridmask"]["url"];
     const string url = urlBase + "/" + deviceId;
 
-    LOG.debugStream() << "Get the gridmask from Device URL: " << url;
+    LOG.debugStream() << "Get the gridmask from Device URL: " << url
+    		<< ". Session: " << sessionId;
 
     list<string> headers;
     headers.push_back("Content-Type: application/json");
-    headers.push_back("sessionid:" + sessionid);
+    headers.push_back("sessionid:" + sessionId);
 
     return this->execute(headers, url, "", false);
 }

@@ -119,6 +119,7 @@ void MotionDetector::run()
 {
     try 
     {
+		LOG.infoStream() << "Start receiving stream from " << streamUrl;
         last_detected = time(NULL);
         VideoCapture cap = createCapture();
         if (show) namedWindow("MD window", WINDOW_AUTOSIZE);
