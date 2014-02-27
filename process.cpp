@@ -30,22 +30,12 @@ string exec(string cmd) {
 
 void termination_handler(int param)
 {
+	LOG.debug("Got signal %d", param);
 	terminated = 1;
 }
 
-void child_process_started()
+void init_signals()
 {
-	umask(0);
-	pid_t sid = setsid();
-	if(sid < 0)
-	{
-		// Return failure
-		exit(1);
-	}
-	chdir("/");
-	close(STDIN_FILENO);
-	close(STDOUT_FILENO);
-	close(STDERR_FILENO);
 
 	terminated = 0;
 	signal(SIGINT, termination_handler);
@@ -57,21 +47,34 @@ int start_process()
 	pid_t process_id = 0;
 
 	process_id = fork();
-	if (process_id < 0)
-	{
+	if (process_id < 0)	{
 		cerr << "Can't fork" << endl;
 		exit(1);
 	}
-	if (process_id > 0)
-	{
+	if (process_id > 0)	{
 		// PARENT PROCESS. Exit normally.
 		exit(0);
 	}
-	else
+	// CHILD PROCESS. We are in the daemon.
+	umask(0);
+	pid_t sid = setsid();
+	if(sid < 0)
 	{
-		// CHILD PROCESS. We are in the daemon.
-		child_process_started();
+		cerr << "Can't setsid" << endl;
+		exit(1);
 	}
+	chdir("/");
+	close(STDIN_FILENO);
+	close(STDOUT_FILENO);
+	close(STDERR_FILENO);
+
+	init_signals();
+	return getpid();
+}
+
+int start_process_sync()
+{
+	init_signals();
 	return getpid();
 }
 

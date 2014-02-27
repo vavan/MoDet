@@ -29,9 +29,9 @@ class MotionDetector
         int timeout;
         int leap;
         bool show;
-
-
         string streamUrl;
+        string screenshot;
+
         VideoCapture createCapture();
         void process(InputArray input);
         void detected(time_t timestamp, Mat& frame);
@@ -53,6 +53,10 @@ MotionDetector::MotionDetector(Url& url, GridMask& gridmask) {
     this->show = MDConfig::getRoot()["main"]["show"];
     this->timeout = MDConfig::getRoot()["main"]["timeout"];
     this->leap = MDConfig::getRoot()["main"]["leap"];
+    string stream = MDConfig::getRoot()["main"]["url"];
+    this->streamUrl = stream;
+    string screenShot = MDConfig::getRoot()["main"]["screenshot"];
+    this->screenshot = screenShot;
 };
 
 
@@ -70,10 +74,10 @@ VideoCapture MotionDetector::createCapture()
 
 string get_time(time_t timestamp)
 {
-	//"2014-02-02 20:15:20"
+	//"2014-02-02_20:15:20"
 	char buffer[20];
 	tm* l= gmtime(&timestamp);
-	strftime(buffer, 32, "%Y-%m-%d %H:%M:%S", l);
+	strftime(buffer, 32, "%Y-%m-%d_%H:%M:%S", l);
 	string str(buffer);
 	return str;
 }
@@ -81,7 +85,10 @@ string get_time(time_t timestamp)
 void MotionDetector::detected(time_t timestamp, Mat& frame)
 {
 	LOG.debug("!!! Motion detected");
-	url.push(get_time(timestamp), deviceId, "");
+	string stime = get_time(timestamp);
+	string imageName = this->screenshot + "/" + stime + ".jpg";
+	imwrite(imageName, frame);
+	url.push(stime, deviceId, imageName);
 }
 
 void MotionDetector::process(InputArray inputFrame) 
@@ -98,7 +105,7 @@ void MotionDetector::process(InputArray inputFrame)
 	}
 
 	absdiff(prevFrame, currFrame, diff);
-	threshold(diff, diff, 30, 255, THRESH_BINARY);
+	threshold(diff, diff, 50, 255, THRESH_BINARY);
 	currFrame.copyTo(prevFrame);
 
 	Mat filtered;
@@ -109,7 +116,6 @@ void MotionDetector::process(InputArray inputFrame)
 	if (nonZero > 0) {
 		time_t now = time(NULL);
 		if (now - last_detected > timeout) {
-			imwrite("/var/log/modet/img.jpg", filtered);
 			detected(now, currFrameColor);
 			last_detected = now;
 		}
@@ -127,7 +133,7 @@ void MotionDetector::run()
 
         Mat frame;
         int skip = 0;
-        while(!terminated)
+        while(1)
         {
             if (!cap.grab()) break;
             if (skip++ > leap)
@@ -165,8 +171,14 @@ int main(int argc, char**argv)
     string sessionId(argv[3]);
 
 
-    if (mode == "start") {
-		int pid = start_process();
+    if (mode == "start" || mode == "sync") {
+    	int pid;
+    	if (mode == "sync") {
+    		pid = start_process_sync();
+    	} else {
+    		pid = start_process();
+    	}
+
 	    init_log(pid, deviceId);
 		LOG.info("Start instance");
 		MDConfig::init();
@@ -178,8 +190,8 @@ int main(int argc, char**argv)
 
 		//start deamon
 		MotionDetector md = MotionDetector(url, mask);
-		string stream = MDConfig::getRoot()["stream"]["url"];
-		md.setStream(stream);// + "/" + deviceId);
+		//
+		//md.setStream(stream);// + "/" + deviceId);
 		md.setDeviceId(deviceId);
 		md.run();
 
