@@ -109,6 +109,7 @@ void MotionDetector::process(InputArray inputFrame)
 	if (nonZero > 0) {
 		time_t now = time(NULL);
 		if (now - last_detected > timeout) {
+			imwrite("/var/log/modet/img.jpg", filtered);
 			detected(now, currFrameColor);
 			last_detected = now;
 		}

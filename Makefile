@@ -27,13 +27,9 @@ clean:
 	rm -rf bin/
 
 
-deploy:
-	rm -rf tmp
-	mkdir tmp
-	cp $(TARGET) tmp/
-	cp modet.cfg tmp/
-	cd tmp && tar -czf modet.tgz *
-	scp tmp/modet.tgz vtymoshchuk@71.96.94.69:/home/vtymoshchuk/
+install:
+	cp $(TARGET) /usr/bin/
+	cp modet.cfg /etc
 
 
 
