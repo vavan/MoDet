@@ -19,9 +19,13 @@ objs:
 bin:
 	mkdir bin
 
-$(OBJ_FILES): objs/%.o : %.cpp | objs
-	g++ -ggdb `pkg-config --cflags opencv` -I./include -c $< -o $@ 
+version:
+	echo "#define VERSION \"`date +%Y-%m-%d_%H:%M:%S`\"" > version.h
 
+objs/config.o: version
+
+$(OBJ_FILES): objs/%.o : %.cpp | version objs
+	g++ -ggdb `pkg-config --cflags opencv` -I./include -c $< -o $@ 
 
 $(TARGET): $(OBJ_FILES) | bin
 	g++ -ggdb `pkg-config --cflags opencv` $(OBJ_FILES) -o $@ `pkg-config --libs opencv` `curl-config --libs` -L./libs -ljson -llog4cpp -lconfig++

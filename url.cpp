@@ -57,19 +57,22 @@ string Url::execute(list<string> headers, string url, string json, bool post)
 
 
 
-void Url::push(string time, string deviceId, string picture) {
-	const string json = "{\"channels\": [\"all\"], \"data\": {"
+void Url::push(string time, string deviceId, string imgageName) {
+	libconfig::Setting& pushCfg = MDConfig::getRoot()["push"];
+	string imgUrl = pushCfg["img_url"];
+	imgUrl += "/" + imgageName;
+
+	const string json = "{\"channels\": [\""+deviceId+"\"], \"data\": {"
 			"\"alert\": \"Motion detected!\""
 			",\"time\": \""+time+"\""
 			",\"device\": \""+deviceId+"\""+
-			",\"picture\": \""+picture+"\"}}";
+			",\"picture\": \""+imgUrl+"\"}}";
 
-	libconfig::Setting& push_cfg = MDConfig::getRoot()["push"];
 
-	const string url = push_cfg["url"];
+	const string url = pushCfg["url"];
 
 	list<string> headers;
-	libconfig::Setting& headers_cfg = push_cfg["headers"];
+	libconfig::Setting& headers_cfg = pushCfg["headers"];
 	int count = headers_cfg.getLength();
 	for (int i = 0; i < count; ++i) {
 		string header = headers_cfg[i];

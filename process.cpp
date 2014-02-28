@@ -36,9 +36,8 @@ void termination_handler(int param)
 
 void init_signals()
 {
-
 	terminated = 0;
-	signal(SIGINT, termination_handler);
+	//signal(SIGINT, termination_handler);
 	signal(SIGTERM, termination_handler);
 }
 
@@ -48,8 +47,7 @@ int start_process()
 
 	process_id = fork();
 	if (process_id < 0)	{
-		cerr << "Can't fork" << endl;
-		exit(1);
+		system_exit("Can't fork");
 	}
 	if (process_id > 0)	{
 		// PARENT PROCESS. Exit normally.
@@ -60,16 +58,14 @@ int start_process()
 	pid_t sid = setsid();
 	if(sid < 0)
 	{
-		cerr << "Can't setsid" << endl;
-		exit(1);
+		system_exit("Can't setsid");
 	}
 	chdir("/");
 	close(STDIN_FILENO);
 	close(STDOUT_FILENO);
 	close(STDERR_FILENO);
 
-	init_signals();
-	return getpid();
+	return start_process_sync();
 }
 
 int start_process_sync()
@@ -80,7 +76,7 @@ int start_process_sync()
 
 void stop_process(string deviceId)
 {
-	string cmd = "ps ax | grep \"modet start "+deviceId+"\" | grep -v \"grep\"| awk '{print $1}'";
+	string cmd = "ps ax | egrep \"modet (start|sync) "+deviceId+"\" | grep -v \"grep\"| awk '{print $1}'";
 	string lines = exec(cmd);
 	istringstream iss(lines);
     do
@@ -88,9 +84,14 @@ void stop_process(string deviceId)
         string pid;
         iss >> pid;
         if (!pid.empty()) {
-        	string cmd = "kill "+pid;
-        	int res = system(cmd.c_str());
-        	LOG.debugStream() << "Execute:" << cmd << ". Result: " << res;
+            int ipid = atoi(pid.c_str());
+            if (ipid != getpid())
+            {
+				string cmd = "kill "+pid;
+				LOG.debugStream() << "Execute:" << cmd;
+				int res = system(cmd.c_str());
+				LOG.debugStream() << "Executed result: " << res;
+            }
         }
     } while (iss);
 }

@@ -25,38 +25,37 @@ class MotionDetector
         Mat diff;
         time_t last_detected;
         string deviceId;
+        string sessionId;
 
         int timeout;
         int leap;
+        int maskLeap;
         bool show;
         string streamUrl;
-        string screenshot;
+        string img_path;
 
         VideoCapture createCapture();
         void process(InputArray input);
         void detected(time_t timestamp, Mat& frame);
+        void build_mask(Size size);
 
 	public:
-        MotionDetector(Url& url, GridMask& gridmask);
-        void setStream(string streamUrl) {
-            this->streamUrl = streamUrl;
-        };
-        void setDeviceId(string deviceId) {
-        	this->deviceId = deviceId;
-        }
-        void run();
+        MotionDetector(string deviceId, string sessionId);
+        bool run();
 };
 
-MotionDetector::MotionDetector(Url& url, GridMask& gridmask) {
+MotionDetector::MotionDetector(string deviceId, string sessionId) {
     this->url = url;
-    this->mask = gridmask;
+    this->deviceId = deviceId;
+    this->sessionId = sessionId;
     this->show = MDConfig::getRoot()["main"]["show"];
     this->timeout = MDConfig::getRoot()["main"]["timeout"];
     this->leap = MDConfig::getRoot()["main"]["leap"];
+    this->maskLeap = MDConfig::getRoot()["gridmask"]["leap"];
     string stream = MDConfig::getRoot()["main"]["url"];
-    this->streamUrl = stream;
-    string screenShot = MDConfig::getRoot()["main"]["screenshot"];
-    this->screenshot = screenShot;
+    this->streamUrl = stream + "/" + deviceId;
+    string img_path = MDConfig::getRoot()["push"]["img_path"];
+    this->img_path = img_path;
 };
 
 
@@ -65,8 +64,7 @@ VideoCapture MotionDetector::createCapture()
     VideoCapture cap(streamUrl);
     if ( !cap.isOpened() )
     {
-        LOG.error("Cannot open the video stream");
-        exit(1);
+		system_exit("Cannot open the video stream");
     }
     double fps = cap.get(CV_CAP_PROP_FPS); 
     return cap;
@@ -82,13 +80,21 @@ string get_time(time_t timestamp)
 	return str;
 }
 
+void MotionDetector::build_mask(Size size)
+{
+	string grid = url.get_grid(deviceId, sessionId);
+	mask = GridMask::create(grid);
+
+	mask.build(size);
+}
+
 void MotionDetector::detected(time_t timestamp, Mat& frame)
 {
 	LOG.debug("!!! Motion detected");
 	string stime = get_time(timestamp);
-	string imageName = this->screenshot + "/" + stime + ".jpg";
-	imwrite(imageName, frame);
-	url.push(stime, deviceId, imageName);
+	string imageName = stime + ".jpg";
+	imwrite(this->img_path + "/" + imageName, frame);
+	url.push(stime, "all", imageName);
 }
 
 void MotionDetector::process(InputArray inputFrame) 
@@ -122,32 +128,41 @@ void MotionDetector::process(InputArray inputFrame)
 	}
 }
 
-void MotionDetector::run() 
+bool MotionDetector::run()
 {
     try 
     {
-		LOG.infoStream() << "Start receiving stream from " << streamUrl;
+		LOG.infoStream() << "Start receiving stream from " << this->streamUrl;
         last_detected = time(NULL);
         VideoCapture cap = createCapture();
         if (show) namedWindow("MD window", WINDOW_AUTOSIZE);
 
         Mat frame;
-        int skip = 0;
-        while(1)
+        int skip = 0; int maskSkip = 0;
+        while(!terminated)
         {
-            if (!cap.grab()) break;
-            if (skip++ > leap)
-            {
-                if (!cap.retrieve(frame)) break;
-
-                if (mask.get().empty()) 
-                {
-                    mask.build(frame.size());
-                }
-                process(frame);
-                skip = 0;
+            if (cap.grab()) {
+				if (skip++ > leap)
+				{
+					if (cap.retrieve(frame)) {
+						if (mask.get().empty() || maskSkip++ > maskLeap)
+						{
+							build_mask(frame.size());
+							maskSkip = 0;
+						}
+						process(frame);
+						skip = 0;
+					} else {
+						LOG.error("retrive() failed");
+						return true;
+					}
+				}
+				//if( waitKey (30) == 27 ) break;
+				waitKey(20);
+            } else {
+            	LOG.error("grab() failed");
+            	return true;
             }
-            if( waitKey (30) == 27 ) break;
         }
     } 
     catch( cv::Exception& e )
@@ -155,6 +170,7 @@ void MotionDetector::run()
         const char* err_msg = e.what();
         LOG.error("OpenCV exception: %s", err_msg);
     }
+    return false;
 }
 
 
@@ -163,8 +179,7 @@ int main(int argc, char**argv)
 {
 	//get the device name from argv
     if (argc < 4) {
-        cerr  << "MotDet Error: Wrong command line. USE modet <start|stop> <deviceId> <sessionId>" << endl;
-        exit(1);
+    	system_exit("MotDet Error: Wrong command line. USE modet <start|stop> <deviceId> <sessionId>");
     }
     string mode(argv[1]);
     string deviceId(argv[2]);
@@ -172,7 +187,7 @@ int main(int argc, char**argv)
 
 
     if (mode == "start" || mode == "sync") {
-    	int pid;
+		int pid;
     	if (mode == "sync") {
     		pid = start_process_sync();
     	} else {
@@ -181,19 +196,17 @@ int main(int argc, char**argv)
 
 	    init_log(pid, deviceId);
 		LOG.info("Start instance");
+		LOG.info("Check for existing instances");
+		stop_process(deviceId);
+
 		MDConfig::init();
 
-		//get gridmask
-		Url url;
-		string grid = url.get_grid(deviceId, sessionId);
-		GridMask mask = GridMask::create(grid);
-
-		//start deamon
-		MotionDetector md = MotionDetector(url, mask);
-		//
-		//md.setStream(stream);// + "/" + deviceId);
-		md.setDeviceId(deviceId);
-		md.run();
+		MotionDetector md = MotionDetector(deviceId, sessionId);
+		bool running = true;
+		while(running) {
+			running = md.run();
+			LOG.debug("Restart: %d", running);
+		}
 
 		LOG.info("Stop instance");
     } else if (mode == "stop") {
@@ -201,8 +214,7 @@ int main(int argc, char**argv)
 		LOG.info("Kill instance");
 		stop_process(deviceId);
     } else {
-        cerr  << "MotDet Error: Wrong MODE. Should be start or stop" << endl;
-        exit(1);
+    	system_exit("MotDet Error: MODE=[start|sync|stop]");
     }
 	return 0;
 }
