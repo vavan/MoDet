@@ -23,6 +23,4 @@ public:
 void init_log(int pid, std::string deviceId);
 
 
-void system_exit(std::string msg);
-
 #endif /* CONFIG_H_ */

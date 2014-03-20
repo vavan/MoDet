@@ -1,98 +1,134 @@
-#include <iostream>
-#include <sstream>
 #include <stdio.h>
 #include <signal.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/file.h>
+#include <errno.h>
 #include "process.h"
 #include "config.h"
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 using namespace std;
-
-int terminated;
-
-string exec(string cmd) {
-    FILE* pipe = popen(cmd.c_str(), "r");
-    if (!pipe)
-    	return "";
-    char buffer[128];
-    string result = "";
-    while(!feof(pipe)) {
-    	if(fgets(buffer, 128, pipe) != NULL)
-    		result += buffer;
-    }
-    pclose(pipe);
-    return result;
-}
 
 void termination_handler(int param)
 {
 	LOG.debug("Got signal %d", param);
-	terminated = 1;
+	//terminated = 1;
+	//TODO
 }
 
-void init_signals()
+Process::Process(string deviceId)
 {
-	terminated = 0;
+	this->deviceId = deviceId;
+	this->locked = lock();
+	this->running = true;
 	//signal(SIGINT, termination_handler);
 	signal(SIGTERM, termination_handler);
 }
-
-int start_process()
+Process::~Process()
 {
-	pid_t process_id = 0;
-
-	process_id = fork();
-	if (process_id < 0)	{
-		system_exit("Can't fork");
-	}
-	if (process_id > 0)	{
-		// PARENT PROCESS. Exit normally.
-		exit(0);
-	}
-	// CHILD PROCESS. We are in the daemon.
-	umask(0);
-	pid_t sid = setsid();
-	if(sid < 0)
-	{
-		system_exit("Can't setsid");
-	}
-	chdir("/");
-	close(STDIN_FILENO);
-	close(STDOUT_FILENO);
-	close(STDERR_FILENO);
-
-	return start_process_sync();
 }
 
-int start_process_sync()
+string Process::pidName()
 {
-	init_signals();
+	return "/var/run/modet/"+this->deviceId+".pid";
+};
+
+bool Process::isRunning()
+{
+	return running;
+}
+bool Process::isLocked()
+{
+	return locked;
+}
+
+
+void Process::start(bool isDaemon)
+{
+	if (isDaemon) {
+		pid_t pid = 0;
+
+		pid = fork();
+		if (pid < 0)	{
+			process_exit("Can't fork");
+		}
+		if (pid > 0)	{
+			// PARENT PROCESS. Exit normally.
+			exit(0);
+		}
+		// CHILD PROCESS. We are in the daemon.
+		umask(0);
+		pid_t sid = setsid();
+		if(sid < 0)
+		{
+			process_exit("Can't setsid");
+		}
+		chdir("/");
+		close(STDIN_FILENO);
+		close(STDOUT_FILENO);
+		close(STDERR_FILENO);
+	}
+	this->pidWrite();
+}
+
+bool Process::lock()
+{
+	const char *pid_file_name = this->pidName().c_str();
+	this->pidFile = open(pid_file_name, O_CREAT | O_RDWR, 0666);
+	int rc = flock(this->pidFile, LOCK_EX | LOCK_NB);
+	if (rc) {
+	    if (EWOULDBLOCK == errno) {
+	    	// another instance is running
+	    	return false;
+	    }
+	}
+	// this is the first instance
+	return true;
+}
+
+int Process::pidRead()
+{
+	const int BUFFER_LENGTH = 256;
+	char buffer[BUFFER_LENGTH];
+	buffer[0] = '\0';
+	read(this->pidFile, buffer, BUFFER_LENGTH);
+	return atoi(buffer);
+}
+
+void Process::pidWrite()
+{
+	const int BUFFER_LENGTH = 256;
+	char buffer[BUFFER_LENGTH];
+	sprintf(buffer, "%d", this->getPid());
+	int length = strlen(buffer);
+	int size = write(this->pidFile, buffer, length);
+}
+
+int Process::getPid()
+{
 	return getpid();
 }
 
-void stop_process(string deviceId)
+void Process::kill()
 {
-	string cmd = "ps ax | egrep \"modet (start|sync) "+deviceId+"\" | grep -v \"grep\"| awk '{print $1}'";
-	string lines = exec(cmd);
-	istringstream iss(lines);
-    do
-    {
-        string pid;
-        iss >> pid;
-        if (!pid.empty()) {
-            int ipid = atoi(pid.c_str());
-            if (ipid != getpid())
-            {
-				string cmd = "kill "+pid;
-				LOG.debugStream() << "Execute:" << cmd;
-				int res = system(cmd.c_str());
-				LOG.debugStream() << "Executed result: " << res;
-            }
-        }
-    } while (iss);
+	int pid = this->pidRead();
+	if (pid != 0) {
+		LOG.debugStream() << "Kill instance: " << pid << " for device: " << deviceId;
+		::kill(pid, SIGTERM);
+	} else {
+		LOG.errorStream() << "No instance for device: " << deviceId;
+	}
+}
+
+void process_exit(std::string msg)
+{
+	LOG.error(msg);
+	cerr << msg << endl;
+	exit(1);
 }
 

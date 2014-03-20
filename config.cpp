@@ -11,6 +11,7 @@
 
 #include "config.h"
 #include "version.h"
+#include "process.h"
 
 using namespace std;
 
@@ -25,11 +26,11 @@ MDConfig::MDConfig()
 	try {
 		cfg.readFile(CONFIG_FILE);
 	} catch (const libconfig::FileIOException &fioex) {
-		system_exit("I/O error while reading config file");
+		process_exit("I/O error while reading config file");
 	} catch (const libconfig::ParseException &pex) {
 		LOG.errorStream() << "Parse error at " << pex.getFile() << ":"
 				<< pex.getLine() << " - " << pex.getError();
-		system_exit("Stop");
+		process_exit("Stop");
 	}
 }
 
@@ -48,10 +49,4 @@ void init_log(int pid, string deviceId)
 	root.info("Version: %s", VERSION);
 }
 
-void system_exit(std::string msg)
-{
-	LOG.error(msg);
-	cerr << msg << endl;
-	exit(1);
-}
 

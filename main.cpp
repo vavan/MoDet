@@ -35,13 +35,13 @@ class MotionDetector
         string img_path;
 
         VideoCapture createCapture();
-        void process(InputArray input);
+        void processFrame(InputArray input);
         void detected(time_t timestamp, Mat& frame);
         void build_mask(Size size);
 
 	public:
         MotionDetector(string deviceId, string sessionId);
-        bool run();
+        bool run(Process &process);
 };
 
 MotionDetector::MotionDetector(string deviceId, string sessionId) {
@@ -62,10 +62,12 @@ MotionDetector::MotionDetector(string deviceId, string sessionId) {
 VideoCapture MotionDetector::createCapture()
 {
     VideoCapture cap(streamUrl);
+	LOG.infoStream() << "Cap 1";
     if ( !cap.isOpened() )
     {
-		system_exit("Cannot open the video stream");
+		process_exit("Cannot open the video stream");
     }
+	LOG.infoStream() << "Cap 2";
     double fps = cap.get(CV_CAP_PROP_FPS); 
     return cap;
 }
@@ -97,7 +99,7 @@ void MotionDetector::detected(time_t timestamp, Mat& frame)
 	url.push(stime, "all", imageName);
 }
 
-void MotionDetector::process(InputArray inputFrame) 
+void MotionDetector::processFrame(InputArray inputFrame)
 {
 	Mat currFrameColor = inputFrame.getMat();
 	Mat currFrame;
@@ -128,18 +130,19 @@ void MotionDetector::process(InputArray inputFrame)
 	}
 }
 
-bool MotionDetector::run()
+bool MotionDetector::run(Process &process)
 {
     try 
     {
 		LOG.infoStream() << "Start receiving stream from " << this->streamUrl;
         last_detected = time(NULL);
         VideoCapture cap = createCapture();
+		LOG.infoStream() << "Cap created";
         if (show) namedWindow("MD window", WINDOW_AUTOSIZE);
 
         Mat frame;
         int skip = 0; int maskSkip = 0;
-        while(!terminated)
+        while(process.isRunning())
         {
             if (cap.grab()) {
 				if (skip++ > leap)
@@ -150,7 +153,7 @@ bool MotionDetector::run()
 							build_mask(frame.size());
 							maskSkip = 0;
 						}
-						process(frame);
+						processFrame(frame);
 						skip = 0;
 					} else {
 						LOG.error("retrive() failed");
@@ -179,32 +182,33 @@ int main(int argc, char**argv)
 {
 	//get the device name from argv
     if (argc < 4) {
-    	system_exit("MotDet Error: Wrong command line. USE modet <start|stop> <deviceId> <sessionId>");
+    	process_exit("MotDet Error: Wrong command line. USE modet <start|stop> <deviceId> <sessionId>");
     }
     string mode(argv[1]);
     string deviceId(argv[2]);
     string sessionId(argv[3]);
 
+	Process process = Process(deviceId);
 
     if (mode == "start" || mode == "sync") {
-		int pid;
+    	if (!process.isLocked()) {
+        	process_exit("Process for device "+deviceId+" is already running. Exit.");
+    	}
     	if (mode == "sync") {
-    		pid = start_process_sync();
+    		process.start(false);
     	} else {
-    		pid = start_process();
+    		process.start();
     	}
 
-	    init_log(pid, deviceId);
+	    init_log(process.getPid(), deviceId);
 		LOG.info("Start instance");
-		LOG.info("Check for existing instances");
-		stop_process(deviceId);
 
 		MDConfig::init();
 
 		MotionDetector md = MotionDetector(deviceId, sessionId);
 		bool running = true;
 		while(running) {
-			running = md.run();
+			running = md.run(process);
 			LOG.debug("Restart: %d", running);
 		}
 
@@ -212,9 +216,9 @@ int main(int argc, char**argv)
     } else if (mode == "stop") {
 	    init_log(0, deviceId);
 		LOG.info("Kill instance");
-		stop_process(deviceId);
+		process.kill();
     } else {
-    	system_exit("MotDet Error: MODE=[start|sync|stop]");
+    	process_exit("MotDet Error: MODE=[start|sync|stop]");
     }
 	return 0;
 }
