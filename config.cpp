@@ -25,12 +25,18 @@ MDConfig::MDConfig()
 {
 	try {
 		cfg.readFile(CONFIG_FILE);
+		string version = cfg.getRoot()["main"]["version"];
+		if (version != CONFIG_VERSION) {
+			LOG.error("Config file outdated!");
+			Process::exit();
+		}
 	} catch (const libconfig::FileIOException &fioex) {
-		process_exit("I/O error while reading config file");
+		LOG.error("I/O error while reading config file");
+		Process::exit();
 	} catch (const libconfig::ParseException &pex) {
-		LOG.errorStream() << "Parse error at " << pex.getFile() << ":"
+		LOG.errorStream() << "Config parse error at " << pex.getFile() << ":"
 				<< pex.getLine() << " - " << pex.getError();
-		process_exit("Stop");
+		Process::exit();
 	}
 }
 

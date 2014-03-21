@@ -31,6 +31,7 @@ Process::Process(string deviceId)
 }
 Process::~Process()
 {
+	//TODO unlock & delete
 }
 
 string Process::pidName()
@@ -55,18 +56,20 @@ void Process::start(bool isDaemon)
 
 		pid = fork();
 		if (pid < 0)	{
-			process_exit("Can't fork");
+			LOG.error("Can't fork");
+			Process::exit();
 		}
 		if (pid > 0)	{
 			// PARENT PROCESS. Exit normally.
-			exit(0);
+			::exit(0);
 		}
 		// CHILD PROCESS. We are in the daemon.
 		umask(0);
 		pid_t sid = setsid();
 		if(sid < 0)
 		{
-			process_exit("Can't setsid");
+			LOG.error("Can't setsid");
+			Process::exit();
 		}
 		chdir("/");
 		close(STDIN_FILENO);
@@ -125,10 +128,9 @@ void Process::kill()
 	}
 }
 
-void process_exit(std::string msg)
+void Process::exit()
 {
-	LOG.error(msg);
-	cerr << msg << endl;
-	exit(1);
+	LOG.error("EXIT");
+	::exit(1);
 }
 

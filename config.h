@@ -3,6 +3,8 @@
 #include <log4cpp/Category.hh>
 #include <libconfig.h++>
 
+#define ALERT_TYPE_MOTION "1"
+#define CONFIG_VERSION "0.5"
 
 #define LOG log4cpp::Category::getRoot()
 

@@ -25,7 +25,7 @@ version:
 objs/config.o: version
 
 $(OBJ_FILES): objs/%.o : %.cpp | version objs
-	g++ -ggdb `pkg-config --cflags opencv` -I./include -c $< -o $@ 
+	g++ -Wall -Wextra -ggdb `pkg-config --cflags opencv` -I./include -c $< -o $@ 
 
 $(TARGET): $(OBJ_FILES) | bin
 	g++ -ggdb `pkg-config --cflags opencv` $(OBJ_FILES) -o $@ `pkg-config --libs opencv` `curl-config --libs` -L./libs -ljson -llog4cpp -lconfig++

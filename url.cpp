@@ -7,6 +7,14 @@
 #include "config.h"
 
 
+Url::Url(string deviceId, string sessionId)
+{
+	this->deviceId = deviceId;
+	this->sessionId = sessionId;
+
+	this->db_url = (const char*)MDConfig::getRoot()["backend"]["database"]["url"];
+}
+
 
 size_t url_write_callback(void *ptr, size_t size, size_t count, void *stream) 
 {
@@ -55,19 +63,34 @@ string Url::execute(list<string> headers, string url, string json, bool post)
     return response;
 }
 
+void Url::pushDb(string time, string imgUrl)
+{
+	const string json = "{\"deviceId\": \""+deviceId+"\""+
+			",\"alertType\": "+ALERT_TYPE_MOTION+
+			",\"alertData\": \""+imgUrl+"\""+
+			",\"alertDate\": \""+time+"\"}}";
 
+	string url = MDConfig::getRoot()["push"]["url"];
+	url = this->db_url + "/" + url;
 
-void Url::push(string time, string deviceId, string imgageName) {
-	libconfig::Setting& pushCfg = MDConfig::getRoot()["push"];
-	string imgUrl = pushCfg["img_url"];
-	imgUrl += "/" + imgageName;
+	list<string> headers;
+    headers.push_back("Content-Type: application/json");
+    headers.push_back("sessionid:" + this->sessionId);
+
+	LOG.debugStream() << "Push json: " << json;
+	LOG.debugStream() << "Push to url: " << url;
+	string response = this->execute(headers, url, json);
+	LOG.debugStream() << "Response: " << response;
+}
+
+void Url::pushClient(string time, string imgUrl) {
+	libconfig::Setting& pushCfg = MDConfig::getRoot()["backend"]["parse"];
 
 	const string json = "{\"channels\": [\""+deviceId+"\"], \"data\": {"
 			"\"alert\": \"Motion detected!\""
 			",\"time\": \""+time+"\""
-			",\"device\": \""+deviceId+"\""+
+			",\"device\": \""+"all"+"\""+ //TODO replace w/ device name
 			",\"picture\": \""+imgUrl+"\"}}";
-
 
 	const string url = pushCfg["url"];
 
@@ -87,15 +110,21 @@ void Url::push(string time, string deviceId, string imgageName) {
 	LOG.debugStream() << "Response: " << response;
 }
 
-string Url::get_grid(string deviceId, string sessionId)
-{
-	if (sessionId.empty()) {
-		string s = MDConfig::getRoot()["gridmask"]["sid"];
-		sessionId = s;
-	}
 
-	string urlBase = MDConfig::getRoot()["gridmask"]["url"];
-    const string url = urlBase + "/" + deviceId;
+void Url::push(string time, string imageName) {
+	libconfig::Setting& pushCfg = MDConfig::getRoot()["push"];
+
+	string imageUrl = pushCfg["img_url"];
+	imageUrl += "/" + imageName;
+
+	pushDb(time, imageUrl);
+	pushClient(time, imageUrl);
+}
+
+string Url::get_grid()
+{
+	string url = MDConfig::getRoot()["gridmask"]["url"];
+	url = this->db_url + "/" + url + "/" + deviceId;
 
     LOG.debugStream() << "Get the gridmask from Device URL: " << url
     		<< ". Session: " << sessionId;

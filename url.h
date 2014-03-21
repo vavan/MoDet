@@ -11,12 +11,18 @@ using namespace std;
 class Url
 {
 private:
+	string db_url;
+	string deviceId;
+	string sessionId;
     string execute(list<string> headers, string url, string json, bool post = true);
 
+    void pushDb(string time, string imageUrl);
+    void pushClient(string time, string imageUrl);
 
-public:  
-    void push(string time, string deviceId, string stream);
-    string get_grid(string deviceId, string sessionid);
+public:
+    Url(string deviceId, string sessionid);
+    void push(string time, string imageName);
+    string get_grid();
 
     string get_login(string u, string p); //TODO remove
 };

@@ -2,37 +2,32 @@
 #define PROCESS_H_
 #include <string>
 
+//#define process_exit(x) Process::exit()
 
 class Process
 {
 	bool locked;
 	bool running;
-	int pidFile;
+	int  pidFile;
 	std::string deviceId;
 	bool lock();
 	std::string pidName();
 	int pidRead();
 	void pidWrite();
 public:
+	static void exit();
+
 	Process(std::string deviceId);
 	~Process();
 
 	bool isLocked();
 	bool isRunning();
-	int getPid();
+	int  getPid();
 	void start(bool isDaemon = true);
-
 	void kill();
+
+
 };
 
-/*
-extern int terminated;
-
-int process_start_daemon();
-int process_start_sync();
-int process_lock(std::string deviceId);
-void process_kill(std::string deviceId);
-*/
-void process_exit(std::string msg);
 
 #endif /* PROCESS_H_ */
