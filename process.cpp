@@ -14,11 +14,28 @@
 #include <string.h>
 using namespace std;
 
-void termination_handler(int param)
+
+Process* Process::_instance = NULL;
+
+Process& Process::instance()
+{
+	return (*Process::_instance);
+}
+
+void Process::init(std::string deviceId)
+{
+	Process::_instance = new Process(deviceId);
+}
+
+void Process::done()
+{
+	delete Process::_instance;
+}
+
+void Process::terminationHandler(int param)
 {
 	LOG.debug("Got signal %d", param);
-	//terminated = 1;
-	//TODO
+	Process::instance().running = false;
 }
 
 Process::Process(string deviceId)
@@ -27,11 +44,14 @@ Process::Process(string deviceId)
 	this->locked = lock();
 	this->running = true;
 	//signal(SIGINT, termination_handler);
-	signal(SIGTERM, termination_handler);
+	signal(SIGTERM, Process::terminationHandler);
 }
 Process::~Process()
 {
-	//TODO unlock & delete
+	if (this->isLocked()) {
+		close(this->pidFile);
+		remove(pidName().c_str());
+	}
 }
 
 string Process::pidName()
@@ -60,10 +80,10 @@ void Process::start(bool isDaemon)
 			Process::exit();
 		}
 		if (pid > 0)	{
-			// PARENT PROCESS. Exit normally.
+			// PARENT Process. Exit normally.
 			::exit(0);
 		}
-		// CHILD PROCESS. We are in the daemon.
+		// CHILD Process. We are in the daemon.
 		umask(0);
 		pid_t sid = setsid();
 		if(sid < 0)
@@ -109,7 +129,7 @@ void Process::pidWrite()
 	char buffer[BUFFER_LENGTH];
 	sprintf(buffer, "%d", this->getPid());
 	int length = strlen(buffer);
-	int size = write(this->pidFile, buffer, length);
+	write(this->pidFile, buffer, length);
 }
 
 int Process::getPid()
@@ -131,6 +151,7 @@ void Process::kill()
 void Process::exit()
 {
 	LOG.error("EXIT");
+	Process::done();
 	::exit(1);
 }
 

@@ -47,7 +47,7 @@ GridMask GridMask::create(string sRoot)
 {
     Json::Value root = json_parse(sRoot);
     Json::Value device = root["device"];
-    int code = root.get("code", 0).asInt();
+    //int code = root.get("code", 0).asInt();
     string sDeviceSetup = device.get("deviceSetup", "").asString();
     Json::Value deviceSetup = json_parse(sDeviceSetup);
     Json::Value motionGrid = deviceSetup["motion_grid"];
@@ -59,7 +59,7 @@ GridMask GridMask::create(string sRoot)
 
     MaskInput mi;
     pair<int, int> item;
-	for ( int i = 0; i < selections.size(); ++i )
+	for ( unsigned int i = 0; i < selections.size(); ++i )
 	{
        item.first = selections[i].get("col", 0).asInt();
        item.second = selections[i].get("row", 0).asInt();

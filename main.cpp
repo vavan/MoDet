@@ -34,20 +34,17 @@ class MotionDetector
         string img_path;
 
         VideoCapture createCapture();
-        void processFrame(InputArray input);
+        void ProcessFrame(InputArray input);
         void detected(time_t timestamp, Mat& frame);
         void build_mask(Size size);
 
 	public:
         MotionDetector(string deviceId, string sessionId);
-        bool run(Process &process);
+        bool run();
 };
 
 MotionDetector::MotionDetector(string deviceId, string sessionId): url(deviceId, sessionId) {
     this->deviceId = deviceId;
-
-    libconfig::Setting& r = MDConfig::getRoot();
-    libconfig::Setting& m = r["main"];
 
     this->show = MDConfig::getRoot()["main"]["show"];
     this->timeout = MDConfig::getRoot()["main"]["timeout"];
@@ -63,14 +60,11 @@ MotionDetector::MotionDetector(string deviceId, string sessionId): url(deviceId,
 VideoCapture MotionDetector::createCapture()
 {
     VideoCapture cap(streamUrl);
-	LOG.infoStream() << "Cap 1";
     if ( !cap.isOpened() )
     {
 		LOG.errorStream() << "Cannot open the video stream: " << streamUrl;
 		Process::exit();
     }
-	LOG.infoStream() << "Cap 2";
-    double fps = cap.get(CV_CAP_PROP_FPS); 
     return cap;
 }
 
@@ -101,7 +95,7 @@ void MotionDetector::detected(time_t timestamp, Mat& frame)
 	url.push(stime, imageName);
 }
 
-void MotionDetector::processFrame(InputArray inputFrame)
+void MotionDetector::ProcessFrame(InputArray inputFrame)
 {
 	Mat currFrameColor = inputFrame.getMat();
 	Mat currFrame;
@@ -132,7 +126,7 @@ void MotionDetector::processFrame(InputArray inputFrame)
 	}
 }
 
-bool MotionDetector::run(Process &process)
+bool MotionDetector::run()
 {
 	LOG.infoStream() << "Start receiving stream from " << this->streamUrl;
 	last_detected = time(NULL);
@@ -142,7 +136,7 @@ bool MotionDetector::run(Process &process)
 
 	Mat frame;
 	int skip = 0; int maskSkip = 0;
-	while(process.isRunning())
+	while(Process::instance().isRunning())
 	{
 		if (cap.grab()) {
 			if (skip++ > leap)
@@ -153,7 +147,7 @@ bool MotionDetector::run(Process &process)
 						build_mask(frame.size());
 						maskSkip = 0;
 					}
-					processFrame(frame);
+					ProcessFrame(frame);
 					skip = 0;
 				} else {
 					LOG.error("retrive() failed");
@@ -183,20 +177,20 @@ int main(int argc, char**argv)
     string deviceId(argv[2]);
     string sessionId(argv[3]);
 
-	Process process = Process(deviceId);
+    Process::init(deviceId);
 
     if (mode == "start" || mode == "sync") {
-    	if (!process.isLocked()) {
+    	if (!Process::instance().isLocked()) {
         	LOG.errorStream() << "Process for device '" << deviceId << "' is already running";
         	Process::exit();
     	}
     	if (mode == "sync") {
-    		process.start(false);
+    		Process::instance().start(false);
     	} else {
-    		process.start();
+    		Process::instance().start();
     	}
 
-	    init_log(process.getPid(), deviceId);
+	    init_log(Process::instance().getPid(), deviceId);
 		LOG.info("Start instance");
 
 		try
@@ -206,7 +200,7 @@ int main(int argc, char**argv)
 			MotionDetector md = MotionDetector(deviceId, sessionId);
 			bool running = true;
 			while(running) {
-				running = md.run(process);
+				running = md.run();
 				LOG.debug("Restart: %d", running);
 			}
 		}
@@ -220,11 +214,12 @@ int main(int argc, char**argv)
     } else if (mode == "stop") {
 	    init_log(0, deviceId);
 		LOG.info("Kill instance");
-		process.kill();
+		Process::instance().kill();
     } else {
     	LOG.error("Wrong mode MODE=[start|sync|stop]");
     	Process::exit();
     }
+    Process::done();
 	return 0;
 }
 
