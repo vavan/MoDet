@@ -8,7 +8,7 @@
 #include <sstream>
 #include <string>
 #include <stdlib.h>
-
+#include <unistd.h>
 #include "config.h"
 #include "version.h"
 #include "process.h"
@@ -41,15 +41,16 @@ MDConfig::MDConfig()
 }
 
 
-void init_log(int pid, string deviceId)
+void init_log(string deviceId)
 {
 	log4cpp::Appender *appender = new log4cpp::FileAppender("default", LOG_FILE);
 	log4cpp::PatternLayout* layout = new log4cpp::PatternLayout();
-	std::stringstream spid; spid << pid;
-	layout->setConversionPattern("%d "+spid.str()+" ["+deviceId+".%p] %m%n");
+	std::stringstream spid; spid << getpid();
+	layout->setConversionPattern("%d "+spid.str()+"-"+deviceId+" [%p] %m%n");
 	appender->setLayout(layout);
 
 	log4cpp::Category& root = log4cpp::Category::getRoot();
+	root.removeAllAppenders();
 	root.setPriority(log4cpp::Priority::DEBUG);
 	root.addAppender(appender);
 	root.info("Version: %s", VERSION);

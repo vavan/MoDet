@@ -168,7 +168,8 @@ bool MotionDetector::run()
 
 int main(int argc, char**argv) 
 {
-	//get the device name from argv
+	init_log();
+
     if (argc < 4) {
     	LOG.error("MotDet Error: Wrong command line. USE modet <start|stop> <deviceId> <sessionId>");
     	Process::exit();
@@ -190,7 +191,7 @@ int main(int argc, char**argv)
     		Process::instance().start();
     	}
 
-	    init_log(Process::instance().getPid(), deviceId);
+	    init_log(deviceId);
 		LOG.info("Start instance");
 
 		try
@@ -212,7 +213,7 @@ int main(int argc, char**argv)
 	    }
 		LOG.info("Stop instance");
     } else if (mode == "stop") {
-	    init_log(0, deviceId);
+	    init_log(deviceId);
 		LOG.info("Kill instance");
 		Process::instance().kill();
     } else {

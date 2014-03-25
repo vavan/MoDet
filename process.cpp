@@ -50,11 +50,11 @@ Process::~Process()
 {
 	if (this->isLocked()) {
 		close(this->pidFile);
-		remove(pidName().c_str());
+		remove(pidFileName().c_str());
 	}
 }
 
-string Process::pidName()
+string Process::pidFileName()
 {
 	return "/var/run/modet/"+this->deviceId+".pid";
 };
@@ -101,7 +101,7 @@ void Process::start(bool isDaemon)
 
 bool Process::lock()
 {
-	const char *pid_file_name = this->pidName().c_str();
+	const char *pid_file_name = this->pidFileName().c_str();
 	this->pidFile = open(pid_file_name, O_CREAT | O_RDWR, 0666);
 	int rc = flock(this->pidFile, LOCK_EX | LOCK_NB);
 	if (rc) {

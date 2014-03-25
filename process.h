@@ -12,7 +12,7 @@ private:
 	std::string deviceId;
 
 	bool lock();
-	std::string pidName();
+	std::string pidFileName();
 	int pidRead();
 	void pidWrite();
 	Process(std::string deviceId);
