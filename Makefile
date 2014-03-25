@@ -3,14 +3,20 @@ TARGET = bin/$(APP)
 
 all:$(TARGET)
 
-OBJ_FILES := \
-    objs/main.o \
-    objs/url.o \
-    objs/gridmask.o \
-    objs/config.o \
-    objs/process.o
+VPATH := objs/
 
-debug: CFLAGS += -g -O0 -Wall -Wextra
+OBJ_FILES := \
+    main.o \
+    url.o \
+    gridmask.o \
+    config.o \
+    process.o
+
+CPP_FILES := $(OBJ_FILES:.o=.cpp)
+
+CFLAGS := -Wall -Wextra -ggdb `pkg-config --cflags opencv` -I./include
+
+debug: CFLAGS += -g -O0
 debug: $(TARGET)
 
 objs:
@@ -22,13 +28,19 @@ bin:
 version:
 	echo "#define VERSION \"`date +%Y-%m-%d_%H:%M:%S`\"" > version.h
 
-objs/config.o: version
+config.o: version
 
-$(OBJ_FILES): objs/%.o : %.cpp | version objs
-	g++ -Wall -Wextra -ggdb `pkg-config --cflags opencv` -I./include -c $< -o $@ 
+.depend: $(CPP_FILES) | objs
+	rm -f objs/.depend
+	g++ $(CFLAGS) -MM $^ >>  objs/.depend;
+
+include .depend
+
+$(OBJ_FILES): %.o : %.cpp | .depend
+	g++ $(CFLAGS) -c $< -o objs/$@ 
 
 $(TARGET): $(OBJ_FILES) | bin
-	g++ -ggdb `pkg-config --cflags opencv` $(OBJ_FILES) -o $@ `pkg-config --libs opencv` `curl-config --libs` -L./libs -ljson -llog4cpp -lconfig++
+	g++ -ggdb `pkg-config --cflags opencv` $(addprefix objs/,$(OBJ_FILES)) -o $@ `pkg-config --libs opencv` `curl-config --libs` -L./libs -ljson -llog4cpp -lconfig++
 
 
 clean:
@@ -38,6 +50,8 @@ clean:
 install:
 	cp $(TARGET) /usr/bin/
 	cp $(APP).cfg /etc
+	echo "INSALLED" >> /var/log/$(APP).log
+	mkdir /var/run/$(APP)
 
 
 
