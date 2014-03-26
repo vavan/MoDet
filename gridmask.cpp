@@ -27,13 +27,13 @@ void GridMask::build(Size frameSize)
     mask = Mat::zeros(frameSize, CV_8UC1);
 
 	if (size.width == 0 || size.height == 0) {
-		LOG.debug("Empty mask specified. Select whole frame");
+		LOG.info("Update mask. Select whole frame");
 		Mat roi(mask, Rect(0, 0, frameSize.width, frameSize.height));
 		roi = Scalar(255);
 	} else {
 		int row_size = frameSize.height / size.height;
 		int col_size = frameSize.width / size.width;
-		LOG.debug("Mask cell is %d x %d pixels", col_size, row_size);
+		LOG.info("Update mask. Cell is %d x %d pixels", col_size, row_size);
 		for(MaskInput::iterator i=mi.begin(); i!=mi.end(); i++) {
 			int x = (*i).first;
 			int y = (*i).second;

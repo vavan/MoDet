@@ -4,7 +4,7 @@
 #include <libconfig.h++>
 
 #define ALERT_TYPE_MOTION "1"
-#define CONFIG_VERSION "0.5"
+#define CONFIG_VERSION "0.7"
 
 #define LOG log4cpp::Category::getRoot()
 

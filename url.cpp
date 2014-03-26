@@ -46,7 +46,7 @@ string Url::execute(list<string> headers, string url, string json, bool post)
             curl_easy_setopt(curl, CURLOPT_POST, 1L);
         else
         	curl_easy_setopt(curl, CURLOPT_HTTPGET, 1L);
-        bool verbose = MDConfig::getRoot()["main"]["verbose"];
+        bool verbose = MDConfig::getRoot()["debug"]["verbose"];
         if (verbose) curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, url_write_callback);
         curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
@@ -70,7 +70,7 @@ void Url::pushDb(string time, string imgUrl)
 			",\"alertData\": \""+imgUrl+"\""+
 			",\"alertDate\": \""+time+"\"}}";
 
-	string url = MDConfig::getRoot()["push"]["url"];
+	string url = MDConfig::getRoot()["push"]["db_url"];
 	url = this->db_url + "/" + url;
 
 	list<string> headers;
@@ -80,13 +80,13 @@ void Url::pushDb(string time, string imgUrl)
 	LOG.debugStream() << "Push json: " << json;
 	LOG.debugStream() << "Push to url: " << url;
 	string response = this->execute(headers, url, json);
-	LOG.debugStream() << "Response: " << response;
+	LOG.infoStream() << "Event DB update response: " << response;
 }
 
 void Url::pushClient(string time, string imgUrl) {
 	libconfig::Setting& pushCfg = MDConfig::getRoot()["backend"]["parse"];
 
-	const string json = "{\"channels\": [\""+deviceId+"\"], \"data\": {"
+	const string json = "{\"channels\": [\"all\"], \"data\": {"
 			"\"alert\": \"Motion detected!\""
 			",\"time\": \""+time+"\""
 			",\"device\": \""+"all"+"\""+ //TODO replace w/ device name
@@ -107,7 +107,7 @@ void Url::pushClient(string time, string imgUrl) {
 	LOG.debugStream() << "Push json: " << json;
 	LOG.debugStream() << "Push to url: " << url;
 	string response = this->execute(headers, url, json);
-	LOG.debugStream() << "Response: " << response;
+	LOG.infoStream() << "Event PUSH notification response: " << response;
 }
 
 
@@ -123,7 +123,7 @@ void Url::push(string time, string imageName) {
 
 string Url::get_grid()
 {
-	string url = MDConfig::getRoot()["gridmask"]["url"];
+	string url = MDConfig::getRoot()["gridmask"]["db_url"];
 	url = this->db_url + "/" + url + "/" + deviceId;
 
     LOG.debugStream() << "Get the gridmask from Device URL: " << url
@@ -136,17 +136,3 @@ string Url::get_grid()
     return this->execute(headers, url, "", false);
 }
 
-
-/*
-string Url::get_login(string u, string p)
-{
-    list<string> headers;
-    headers.push_back("Content-type: application/json");
-    string json = "{\"username\": \"" + u + "\", \"password\": \"" + p + "\"}"; 
-    const string url = "http://71.96.94.57/verizonbackend/v1/api/user/login";
-
-    string response = this->execute(headers, url, json);
-    return response;
-}
-
-*/

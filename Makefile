@@ -10,7 +10,8 @@ OBJ_FILES := \
     url.o \
     gridmask.o \
     config.o \
-    process.o
+    process.o \
+    detector.o
 
 CPP_FILES := $(OBJ_FILES:.o=.cpp)
 
@@ -34,7 +35,7 @@ config.o: version
 	rm -f objs/.depend
 	g++ $(CFLAGS) -MM $^ >>  objs/.depend;
 
-include .depend
+-include .depend
 
 $(OBJ_FILES): %.o : %.cpp | .depend
 	g++ $(CFLAGS) -c $< -o objs/$@ 

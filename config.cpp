@@ -25,7 +25,7 @@ MDConfig::MDConfig()
 {
 	try {
 		cfg.readFile(CONFIG_FILE);
-		string version = cfg.getRoot()["main"]["version"];
+		string version = cfg.getRoot()["version"];
 		if (version != CONFIG_VERSION) {
 			LOG.error("Config file outdated!");
 			Process::exit();
