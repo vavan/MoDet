@@ -13,7 +13,6 @@ using namespace std;
 
 
 void runDetection(string& deviceId, string sessionId) {
-	MDConfig::init();
 	try {
 		MotionDetector md = MotionDetector(deviceId, sessionId);
 		bool running = true;
@@ -58,6 +57,7 @@ int main(int argc, char**argv)
     	} else {
     		Process::instance().start();
     	}
+    	MDConfig::init();
 	    init_log(deviceId);
 
 	    LOG.info("Start instance. Version %s", VERSION);

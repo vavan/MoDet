@@ -50,7 +50,10 @@ void init_log(string deviceId)
 
 	log4cpp::Category& root = log4cpp::Category::getRoot();
 	root.removeAllAppenders();
-	root.setPriority(log4cpp::Priority::DEBUG);
+	if (MDConfig::valid())
+		root.setPriority(MDConfig::getRoot()["debug"]["level"]);
+	else
+		root.setPriority(log4cpp::Priority::DEBUG);
 	root.addAppender(appender);
 }
 

@@ -4,7 +4,7 @@
 #include <libconfig.h++>
 
 #define ALERT_TYPE_MOTION "1"
-#define CONFIG_VERSION "0.7"
+#define CONFIG_VERSION "0.8"
 
 #define LOG log4cpp::Category::getRoot()
 
@@ -19,6 +19,9 @@ public:
 	static libconfig::Setting& getRoot() {
 		return instance->cfg.getRoot();
 	};
+	static bool valid() {
+		return (instance != NULL);
+	}
 };
 
 
