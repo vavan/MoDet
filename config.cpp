@@ -10,7 +10,6 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include "config.h"
-#include "version.h"
 #include "process.h"
 
 using namespace std;
@@ -53,7 +52,6 @@ void init_log(string deviceId)
 	root.removeAllAppenders();
 	root.setPriority(log4cpp::Priority::DEBUG);
 	root.addAppender(appender);
-	root.info("Version: %s", VERSION);
 }
 
 

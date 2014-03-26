@@ -6,7 +6,7 @@
 #include "config.h"
 #include "process.h"
 #include "detector.h"
-
+#include "version.h"
 
 using namespace std;
 
@@ -60,7 +60,7 @@ int main(int argc, char**argv)
     	}
 	    init_log(deviceId);
 
-	    LOG.info("Start instance");
+	    LOG.info("Start instance. Version %s", VERSION);
 		runDetection(deviceId, sessionId);
 		LOG.info("Stop instance");
 
