@@ -10,10 +10,12 @@ CPP_FILES := \
 
 CFLAGS := -Wall -Wextra -ggdb `pkg-config --cflags opencv` -I./include -I./objs
 LDFLAGS := `pkg-config --libs opencv` `curl-config --libs` -ggdb -L./libs -ljson -llog4cpp -lconfig++
-
-OBJ_FILES := $(CPP_FILES:.cpp=.o)
-TARGET = bin/$(APP)
-VPATH = ./objs
+OBJS := objs
+BIN := bin
+OBJ_FILES := $(addprefix $(OBJS)/,$(CPP_FILES:.cpp=.o))
+VERSION = $(OBJS)/version.h 
+DEPENDENCY = $(OBJS)/depend 
+TARGET = $(BIN)/$(APP)
 CPP := g++
 LD := g++
 
@@ -22,41 +24,41 @@ all: $(TARGET)
 debug: CFLAGS += -g -O0
 debug: $(TARGET)
 
-objs:
-	mkdir objs
+$(OBJS):
+	mkdir $(OBJS)
 
-bin:
-	mkdir bin
+$(BIN):
+	mkdir $(BIN)
 
-version.h: | objs
-	echo "#define VERSION \"`date +%Y-%m-%d_%H:%M:%S`\"" > objs/version.h
+$(VERSION): | $(OBJS)
+	echo "#define VERSION \"`date +%Y-%m-%d_%H:%M:%S`\"" > $@
 
 
-objs/depend: $(CPP_FILES) | version.h
-	rm -f objs/depend
-	$(CPP) $(CFLAGS) -MM $^ >>  objs/depend
+$(DEPENDENCY): $(CPP_FILES) | $(VERSION)
+	rm -f $@
+	$(CPP) $(CFLAGS) -MM $^ >> $@
 
 # only include if goal is not clean mor install
 ifneq ($(MAKECMDGOALS),clean)
 ifneq ($(MAKECMDGOALS),install)
--include objs/depend
+-include $(DEPENDENCY)
 endif
 endif
 
-$(OBJ_FILES): %.o : %.cpp | objs/depend
-	$(CPP) $(CFLAGS) -c $< -o objs/$@ 
+$(OBJ_FILES): objs/%.o : %.cpp | $(DEPENDENCY)
+	$(CPP) $(CFLAGS) -c $< -o $@ 
 
-$(TARGET): $(OBJ_FILES) | bin
-	$(LD) $(addprefix objs/,$(OBJ_FILES)) -o $@ $(LDFLAGS) 
+$(TARGET): $(OBJ_FILES) | $(BIN)
+	$(LD) $(OBJ_FILES) -o $@ $(LDFLAGS) 
 
 
 clean:
-	rm -rf bin/ objs/
+	rm -rf $(BIN) $(OBJS)
 
 
 install:
 	cp $(TARGET) /usr/bin/
-	cp $(APP).cfg /etc
+	cp $(APP).cfg /etc/
 	echo "INSALLED" >> /var/log/$(APP).log
 	mkdir /var/run/$(APP)
 
