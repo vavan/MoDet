@@ -1,21 +1,23 @@
 APP = modet
+
+CPP_FILES := \
+    main.cpp \
+    url.cpp \
+    gridmask.cpp \
+    config.cpp \
+    process.cpp \
+    detector.cpp
+
+CFLAGS := -Wall -Wextra -ggdb `pkg-config --cflags opencv` -I./include -I./objs
+LDFLAGS := `pkg-config --libs opencv` `curl-config --libs` -ggdb -L./libs -ljson -llog4cpp -lconfig++
+
+OBJ_FILES := $(CPP_FILES:.cpp=.o)
 TARGET = bin/$(APP)
+VPATH = ./objs
+CPP := g++
+LD := g++
 
-all:$(TARGET)
-
-VPATH := objs/
-
-OBJ_FILES := \
-    main.o \
-    url.o \
-    gridmask.o \
-    config.o \
-    process.o \
-    detector.o
-
-CPP_FILES := $(OBJ_FILES:.o=.cpp)
-
-CFLAGS := -Wall -Wextra -ggdb `pkg-config --cflags opencv` -I./include
+all: $(TARGET)
 
 debug: CFLAGS += -g -O0
 debug: $(TARGET)
@@ -26,22 +28,26 @@ objs:
 bin:
 	mkdir bin
 
-version:
-	echo "#define VERSION \"`date +%Y-%m-%d_%H:%M:%S`\"" > version.h
+version.h: | objs
+	echo "#define VERSION \"`date +%Y-%m-%d_%H:%M:%S`\"" > objs/version.h
 
-config.o: version
 
-.depend: $(CPP_FILES) | objs
-	rm -f objs/.depend
-	g++ $(CFLAGS) -MM $^ >>  objs/.depend;
+objs/depend: $(CPP_FILES) | version.h
+	rm -f objs/depend
+	$(CPP) $(CFLAGS) -MM $^ >>  objs/depend
 
--include .depend
+# only include if goal is not clean mor install
+ifneq ($(MAKECMDGOALS),clean)
+ifneq ($(MAKECMDGOALS),install)
+-include objs/depend
+endif
+endif
 
-$(OBJ_FILES): %.o : %.cpp | .depend
-	g++ $(CFLAGS) -c $< -o objs/$@ 
+$(OBJ_FILES): %.o : %.cpp | objs/depend
+	$(CPP) $(CFLAGS) -c $< -o objs/$@ 
 
 $(TARGET): $(OBJ_FILES) | bin
-	g++ -ggdb `pkg-config --cflags opencv` $(addprefix objs/,$(OBJ_FILES)) -o $@ `pkg-config --libs opencv` `curl-config --libs` -L./libs -ljson -llog4cpp -lconfig++
+	$(LD) $(addprefix objs/,$(OBJ_FILES)) -o $@ $(LDFLAGS) 
 
 
 clean:
