@@ -7,19 +7,21 @@
 #include "config.h"
 
 
+#define ALERT_TYPE_MOTION "1"
+
+
 Url::Url(string deviceId, string sessionId)
 {
 	this->deviceId = deviceId;
 	this->sessionId = sessionId;
-
 	this->db_url = (const char*)MDConfig::getRoot()["backend"]["database"]["url"];
 }
 
 
-size_t url_write_callback(void *ptr, size_t size, size_t count, void *stream) 
+size_t Url::callback(void *ptr, size_t size, size_t count, void *stream)
 {
-  ((string*)stream)->append((char*)ptr, 0, size*count);
-  return size*count;
+	((string*)stream)->append((char*)ptr, 0, size*count);
+	return size*count;
 }
 
 string Url::execute(list<string> headers, string url, string json, bool post)
@@ -48,7 +50,7 @@ string Url::execute(list<string> headers, string url, string json, bool post)
         	curl_easy_setopt(curl, CURLOPT_HTTPGET, 1L);
         bool verbose = MDConfig::getRoot()["debug"]["verbose"];
         if (verbose) curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
-        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, url_write_callback);
+        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, Url::callback);
         curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
 
         res = curl_easy_perform(curl);

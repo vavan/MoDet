@@ -6,12 +6,10 @@
 #include <sys/stat.h>
 #include <sys/file.h>
 #include <errno.h>
+#include <string.h>
+#include <fstream>
 #include "process.h"
 #include "config.h"
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 using namespace std;
 
 
@@ -43,7 +41,6 @@ Process::Process(string deviceId)
 	this->deviceId = deviceId;
 	this->locked = lock();
 	this->running = true;
-	//signal(SIGINT, termination_handler);
 	signal(SIGTERM, Process::terminationHandler);
 }
 Process::~Process()
@@ -116,20 +113,16 @@ bool Process::lock()
 
 int Process::pidRead()
 {
-	const int BUFFER_LENGTH = 256;
-	char buffer[BUFFER_LENGTH];
-	buffer[0] = '\0';
-	read(this->pidFile, buffer, BUFFER_LENGTH);
-	return atoi(buffer);
+	ifstream f(pidFileName().c_str());
+	int pid;
+	f >> pid;
+	return pid;
 }
 
 void Process::pidWrite()
 {
-	const int BUFFER_LENGTH = 256;
-	char buffer[BUFFER_LENGTH];
-	sprintf(buffer, "%d", this->getPid());
-	int length = strlen(buffer);
-	write(this->pidFile, buffer, length);
+	ofstream f(pidFileName().c_str());
+	f << this->getPid();
 }
 
 int Process::getPid()

@@ -13,11 +13,13 @@ LDFLAGS := `pkg-config --libs opencv` `curl-config --libs` -ggdb -L./libs -ljson
 OBJS := objs
 BIN := bin
 OBJ_FILES := $(addprefix $(OBJS)/,$(CPP_FILES:.cpp=.o))
-VERSION = $(OBJS)/version.h 
+MIN_VERSION = $(OBJS)/version.out
 DEPENDENCY = $(OBJS)/depend 
 TARGET = $(BIN)/$(APP)
 CPP := g++
 LD := g++
+MAJ_VERSION := 0
+
 
 all: $(TARGET)
 
@@ -30,11 +32,14 @@ $(OBJS):
 $(BIN):
 	mkdir $(BIN)
 
-$(VERSION): | $(OBJS)
-	echo "#define VERSION \"`date +%Y-%m-%d_%H:%M:%S`\"" > $@
+$(MIN_VERSION): version.txt | $(OBJS)
+	@echo $$(($$(cat $<) + 1)) > $< 
+	@cp $< $@
+	@touch $@
+	@echo Building version: $(MAJ_VERSION).$$(cat $(MIN_VERSION))
 
 
-$(DEPENDENCY): $(CPP_FILES) | $(VERSION)
+$(DEPENDENCY): $(CPP_FILES) | $(MIN_VERSION)
 	rm -f $@
 	$(CPP) $(CFLAGS) -MM $^ >> $@
 
@@ -46,7 +51,7 @@ endif
 endif
 
 $(OBJ_FILES): objs/%.o : %.cpp | $(DEPENDENCY)
-	$(CPP) $(CFLAGS) -c $< -o $@ 
+	$(CPP) $(CFLAGS) -DMIN_VERSION=$$(cat $(MIN_VERSION)) -DMAJ_VERSION=$(MAJ_VERSION) -c $< -o $@ 
 
 $(TARGET): $(OBJ_FILES) | $(BIN)
 	$(LD) $(OBJ_FILES) -o $@ $(LDFLAGS) 

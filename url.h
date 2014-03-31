@@ -19,6 +19,7 @@ private:
     void pushDb(string time, string imageUrl);
     void pushClient(string time, string imageUrl);
 
+    static size_t callback(void *ptr, size_t size, size_t count, void *stream);
 public:
     Url(string deviceId, string sessionid);
     void push(string time, string imageName);

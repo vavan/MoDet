@@ -3,8 +3,6 @@
 #include <log4cpp/Category.hh>
 #include <libconfig.h++>
 
-#define ALERT_TYPE_MOTION "1"
-#define CONFIG_VERSION "0.8"
 
 #define LOG log4cpp::Category::getRoot()
 
@@ -26,6 +24,8 @@ public:
 
 
 void init_log(std::string deviceId="NONE");
+
+std::string version_name();
 
 
 #endif /* CONFIG_H_ */

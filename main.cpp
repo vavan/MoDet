@@ -1,12 +1,20 @@
-//https://help.ubuntu.com/community/OpenCV
-
+/*
+ * Motion Detection System. VZ Smart Home Initiative
+ *
+ * Dependency:
+ *  OpenCV: https://help.ubuntu.com/community/OpenCV
+ *  JSON: included
+ *  Config: apt-get apt-get libconfig++
+ *  Logging: apt-get install liblog4cpp
+ *  Curl:apt-get install libcurl
+ *  TODO - validate
+ */
 #include <iostream>
 #include <time.h>
 #include <stdlib.h>
 #include "config.h"
 #include "process.h"
 #include "detector.h"
-#include "version.h"
 
 using namespace std;
 
@@ -60,7 +68,7 @@ int main(int argc, char**argv)
     	MDConfig::init();
 	    init_log(deviceId);
 
-	    LOG.info("Start instance. Version %s", VERSION);
+	    LOG.infoStream() << "Start instance. Version: " << version_name();
 		runDetection(deviceId, sessionId);
 		LOG.info("Stop instance");
 

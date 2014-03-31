@@ -17,6 +17,12 @@ using namespace std;
 
 #define CONFIG_FILE "/etc/modet.cfg"
 #define LOG_FILE "/var/log/modet.log"
+#ifndef MAJ_VERSION
+#define MAJ_VERSION 0
+#endif
+#ifndef MIN_VERSION
+#define MIN_VERSION 0
+#endif
 
 MDConfig *MDConfig::instance = NULL;
 
@@ -25,8 +31,8 @@ MDConfig::MDConfig()
 	try {
 		cfg.readFile(CONFIG_FILE);
 		string version = cfg.getRoot()["version"];
-		if (version != CONFIG_VERSION) {
-			LOG.error("Config file outdated!");
+		if (version != version_name()) {
+			LOG.errorStream() << "Config file VERSION is expected to be: " << version_name();
 			Process::exit();
 		}
 	} catch (const libconfig::FileIOException &fioex) {
@@ -57,4 +63,10 @@ void init_log(string deviceId)
 	root.addAppender(appender);
 }
 
+string version_name()
+{
+	stringstream convert;
+	convert << MAJ_VERSION << "." << MIN_VERSION;
+	return convert.str();
+}
 
