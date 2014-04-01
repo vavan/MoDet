@@ -12,7 +12,7 @@ def get_streams():
 
 
 def ffthread(video, index):
-    out = file('fftest%08d.log'%index, 'w')
+    out = file('sendff-%08d.log'%index, 'w')
     cmd = 'ffmpeg -re -i %s -t 00:10:00 -f flv -ar 11025 rtmp://71.96.94.69/rtmp/testa%08d'%(video, index)
     print cmd
     pid = subprocess.Popen(cmd.split(), stderr=out).pid
