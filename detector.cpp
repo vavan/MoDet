@@ -1,5 +1,5 @@
 #include "detector.h"
-#include "config.h"
+#include "tool.h"
 #include "process.h"
 #include "timer.h"
 
@@ -27,9 +27,9 @@ VideoCapture MotionDetector::createCapture()
     return cap;
 }
 
-string getFormattedTime()
+string MotionDetector::getFormattedTime()
 {
-	//"2014-02-02T20:15:20"
+	//Time format is: "2014-02-02T20:15:20"
 	time_t now = time(NULL);
 	char buffer[20];
 	tm* l= gmtime(&now);
@@ -40,7 +40,7 @@ string getFormattedTime()
 
 void MotionDetector::buildMask(Size size)
 {
-	string grid = url.get_grid();
+	string grid = url.getGrid();
 	mask = GridMask::create(grid);
 	mask.build(size);
 }

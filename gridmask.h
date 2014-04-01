@@ -6,6 +6,9 @@
 
 typedef std::list< std::pair<int,int> > MaskInput;
 
+/*
+ * Grid mask for selection. Only motion inside selected area is detected
+ */
 class GridMask
 {
 private:
@@ -14,17 +17,22 @@ private:
     cv::Mat mask;
 
 public:
+    //Ctors
     GridMask() {};
     GridMask(cv::Size size, MaskInput mi)
     {
         this->size = size;
         this->mi = mi;
     }
+    //Mask getter
     cv::Mat get() 
     {
         return this->mask;
     };
+    //Build the cv::Mat based on give FRAME SIZE
     void build(cv::Size frameSize);
+
+    //Create GridMask object based on selection received from backend
     static GridMask create(std::string json);
 };
 

@@ -12,14 +12,16 @@
 #include <iostream>
 #include <time.h>
 #include <stdlib.h>
-#include "config.h"
+#include "tool.h"
 #include "process.h"
 #include "detector.h"
 
 using namespace std;
 
 
-
+/*
+ * Run detection and handle all the exceptions
+ */
 void runDetection(string& deviceId, string sessionId) {
 	try {
 		MotionDetector md = MotionDetector(deviceId, sessionId);
@@ -42,6 +44,9 @@ void runDetection(string& deviceId, string sessionId) {
 	}
 }
 
+/*
+ * Program entry point. Start/stop daemon.
+ */
 int main(int argc, char**argv) 
 {
 	init_log();

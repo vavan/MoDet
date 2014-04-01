@@ -9,7 +9,7 @@
 #include <string>
 #include <stdlib.h>
 #include <unistd.h>
-#include "config.h"
+#include "tool.h"
 #include "process.h"
 
 using namespace std;
@@ -17,6 +17,7 @@ using namespace std;
 
 #define CONFIG_FILE "/etc/modet.cfg"
 #define LOG_FILE "/var/log/modet.log"
+
 #ifndef MAJ_VERSION
 #define MAJ_VERSION 0
 #endif

@@ -9,7 +9,7 @@
 #include <string.h>
 #include <fstream>
 #include "process.h"
-#include "config.h"
+#include "tool.h"
 using namespace std;
 
 
@@ -64,7 +64,6 @@ bool Process::isLocked()
 {
 	return locked;
 }
-
 
 void Process::start(bool isDaemon)
 {

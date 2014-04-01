@@ -4,7 +4,7 @@ CPP_FILES := \
     main.cpp \
     url.cpp \
     gridmask.cpp \
-    config.cpp \
+    tool.cpp \
     process.cpp \
     detector.cpp
 

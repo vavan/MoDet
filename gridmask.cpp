@@ -3,7 +3,7 @@
 #include <opencv/cv.h>
 #include "json/json.h"
 #include "gridmask.h"
-#include "config.h"
+#include "tool.h"
 
 using namespace cv;
 using namespace std;

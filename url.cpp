@@ -4,9 +4,9 @@
 #include <fstream>
 #include <streambuf>
 #include "url.h"
-#include "config.h"
+#include "tool.h"
 
-
+//Motion detection event ID
 #define ALERT_TYPE_MOTION "1"
 
 
@@ -56,7 +56,7 @@ string Url::execute(list<string> headers, string url, string json, bool post)
         res = curl_easy_perform(curl);
 
         if(res != CURLE_OK)
-            fprintf(stderr, "curl_easy_perform() failed: %s\n", curl_easy_strerror(res));
+        	LOG.errorStream() << "curl_easy_perform() failed: " << curl_easy_strerror(res);
 
         curl_easy_cleanup(curl);
 
@@ -123,7 +123,7 @@ void Url::push(string time, string imageName) {
 	pushClient(time, imageUrl);
 }
 
-string Url::get_grid()
+string Url::getGrid()
 {
 	string url = MDConfig::getRoot()["gridmask"]["db_url"];
 	url = this->db_url + "/" + url + "/" + deviceId;
