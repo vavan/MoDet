@@ -65,7 +65,7 @@ install:
 	cp $(TARGET) /usr/bin/
 	cp $(APP).cfg /etc/
 	echo "INSALLED" >> /var/log/$(APP).log
-	mkdir /var/run/$(APP)
+	mkdir -p /var/run/$(APP)
 
 
 

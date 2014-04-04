@@ -2,7 +2,7 @@
 import subprocess
 import time, os, sys
 
-#THREADS = 3
+THREADS = 3
 
 
 def get_streams():
@@ -20,7 +20,7 @@ def ffthread(video, index):
 
 
 video = sys.argv[1]
-THREADS = int(sys.argv[2])
+threads = int(sys.argv[2])
 index = 0
 while(1):
     streams = get_streams()
