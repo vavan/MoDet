@@ -10,10 +10,9 @@
 #define ALERT_TYPE_MOTION "1"
 
 
-Url::Url(string deviceId, string sessionId)
+Url::Url(string deviceId)
 {
 	this->deviceId = deviceId;
-	this->sessionId = sessionId;
 	this->db_url = (const char*)MDConfig::getRoot()["backend"]["database"]["url"];
 }
 
@@ -77,41 +76,12 @@ void Url::pushDb(string time, string imgUrl)
 
 	list<string> headers;
     headers.push_back("Content-Type: application/json");
-    headers.push_back("sessionid:" + this->sessionId);
 
 	LOG.debugStream() << "Push json: " << json;
 	LOG.debugStream() << "Push to url: " << url;
 	string response = this->execute(headers, url, json);
 	LOG.infoStream() << "Event DB update response: " << response;
 }
-
-void Url::pushClient(string time, string imgUrl) {
-	libconfig::Setting& pushCfg = MDConfig::getRoot()["backend"]["parse"];
-
-	const string json = "{\"channels\": [\"all\"], \"data\": {"
-			"\"alert\": \"Motion detected!\""
-			",\"time\": \""+time+"\""
-			",\"device\": \""+"all"+"\""+ //TODO replace w/ device name
-			",\"picture\": \""+imgUrl+"\"}}";
-
-	const string url = pushCfg["url"];
-
-	list<string> headers;
-	libconfig::Setting& headers_cfg = pushCfg["headers"];
-	int count = headers_cfg.getLength();
-	for (int i = 0; i < count; ++i) {
-		string header = headers_cfg[i];
-		headers.push_back(header);
-		LOG.debugStream() << "Push header: " << header;
-	}
-	headers.push_back("Content-Type: application/json");
-
-	LOG.debugStream() << "Push json: " << json;
-	LOG.debugStream() << "Push to url: " << url;
-	string response = this->execute(headers, url, json);
-	LOG.infoStream() << "Event PUSH notification response: " << response;
-}
-
 
 void Url::push(string time, string imageName) {
 	libconfig::Setting& pushCfg = MDConfig::getRoot()["push"];
@@ -120,7 +90,6 @@ void Url::push(string time, string imageName) {
 	imageUrl += "/" + imageName;
 
 	pushDb(time, imageUrl);
-	pushClient(time, imageUrl);
 }
 
 string Url::getGrid()
@@ -128,12 +97,10 @@ string Url::getGrid()
 	string url = MDConfig::getRoot()["gridmask"]["db_url"];
 	url = this->db_url + "/" + url + "/" + deviceId;
 
-    LOG.debugStream() << "Get the gridmask from Device URL: " << url
-    		<< ". Session: " << sessionId;
+    LOG.debugStream() << "Get the gridmask from Device URL: " << url;
 
     list<string> headers;
     headers.push_back("Content-Type: application/json");
-    headers.push_back("sessionid:" + sessionId);
 
     return this->execute(headers, url, "", false);
 }

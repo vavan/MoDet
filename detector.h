@@ -42,7 +42,7 @@ class MotionDetector
 
 	public:
         //Ctor for specific device and session
-        MotionDetector(string deviceId, string sessionId);
+        MotionDetector(string deviceId);
 
         //Run detection cycle
         bool run();

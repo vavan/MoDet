@@ -16,7 +16,6 @@ class Url
 private:
 	string db_url;
 	string deviceId;
-	string sessionId;
 
 	//Execute a request using headers, url, json to send to and mode
     string execute(list<string> headers, string url, string json, bool post = true);
@@ -32,7 +31,7 @@ private:
 public:
 
     //Ctor
-    Url(string deviceId, string sessionid);
+    Url(string deviceId);
 
     //Push mption detected event notification
     void push(string time, string imageName);

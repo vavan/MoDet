@@ -6,12 +6,12 @@
 
 
 
-MotionDetector::MotionDetector(string deviceId, string sessionId): url(deviceId, sessionId) {
+MotionDetector::MotionDetector(string deviceId): url(deviceId) {
     this->deviceId = deviceId;
 
     this->show = MDConfig::getRoot()["debug"]["show"];
     string stream = MDConfig::getRoot()["stream"];
-    this->streamUrl = stream + "/" + deviceId + "?sessionid="+sessionId;
+    this->streamUrl = stream + "/" + deviceId;
     this->img_path = (const char*)MDConfig::getRoot()["push"]["img_path"];
 };
 

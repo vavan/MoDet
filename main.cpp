@@ -22,9 +22,9 @@ using namespace std;
 /*
  * Run detection and handle all the exceptions
  */
-void runDetection(string& deviceId, string sessionId) {
+void runDetection(string& deviceId) {
 	try {
-		MotionDetector md = MotionDetector(deviceId, sessionId);
+		MotionDetector md = MotionDetector(deviceId);
 		bool running = true;
 		while (running) {
 			running = md.run();
@@ -50,13 +50,12 @@ void runDetection(string& deviceId, string sessionId) {
 int main(int argc, char**argv) 
 {
 	init_log();
-    if (argc < 4) {
+    if (argc < 3) {
     	LOG.error("MotDet Error: Wrong command line. USE modet <start|stop> <deviceId> <sessionId>");
     	Process::exit();
     }
     string mode(argv[1]);
     string deviceId(argv[2]);
-    string sessionId(argv[3]);
 
     Process::init(deviceId);
 
@@ -74,7 +73,7 @@ int main(int argc, char**argv)
 	    init_log(deviceId);
 
 	    LOG.infoStream() << "Start instance. Version: " << version_name();
-		runDetection(deviceId, sessionId);
+		runDetection(deviceId);
 		LOG.info("Stop instance");
 
     } else if (mode == "stop") {
