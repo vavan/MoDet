@@ -19,8 +19,10 @@ class MotionDetector
         GridMask mask;
         Url url;
         Mat diff;
-        string deviceId;
+        int lowThreshold;
+        int numberNonZero;
 
+        string deviceId;
         bool show;
         string streamUrl;
         string img_path;

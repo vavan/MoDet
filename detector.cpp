@@ -13,6 +13,9 @@ MotionDetector::MotionDetector(string deviceId): url(deviceId) {
     string stream = MDConfig::getRoot()["stream"];
     this->streamUrl = stream + "/" + deviceId;
     this->img_path = (const char*)MDConfig::getRoot()["push"]["img_path"];
+
+    this->lowThreshold = MDConfig::getRoot()["debug"]["lowThreshold"];
+    this->numberNonZero = MDConfig::getRoot()["debug"]["numberNonZero"];
 };
 
 
@@ -68,7 +71,7 @@ void MotionDetector::processFrame(InputArray inputFrame, Timer& detection_timeou
 	}
 
 	absdiff(prevFrame, currFrame, diff);
-	threshold(diff, diff, 50, 255, THRESH_BINARY);
+	threshold(diff, diff, this->lowThreshold, 255, THRESH_BINARY);
 	currFrame.copyTo(prevFrame);
 
 	Mat filtered;
@@ -76,7 +79,7 @@ void MotionDetector::processFrame(InputArray inputFrame, Timer& detection_timeou
 
 	if (show) imshow("MD window", filtered);
 	int nonZero = countNonZero(filtered);
-	if (nonZero > 0) {
+	if (nonZero > this->numberNonZero) {
 		if (detection_timeout.isTimeTo()) {
 			detected(currFrameColor);
 		}
