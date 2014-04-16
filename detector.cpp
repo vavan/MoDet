@@ -52,7 +52,7 @@ void MotionDetector::detected(Mat& frame)
 {
 	LOG.warn("!!! Motion detected");
 	string stime = getFormattedTime();
-	string imageName = stime + ".jpg";
+	string imageName = this->deviceId + stime + ".jpg";
 	imwrite(this->img_path + "/" + imageName, frame);
 	url.push(stime, imageName);
 }
