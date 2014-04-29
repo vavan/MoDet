@@ -1,6 +1,6 @@
 #ifndef TIMER_H_
 #define TIMER_H_
-#include <sys/time.h>
+#include <time.h>
 
 
 /*
@@ -14,9 +14,9 @@ private:
 	//Return timestump since epoch in ms
 	long nowMillisec()
 	{
-	    struct timeval vtime;
-	    gettimeofday(&vtime, NULL);
-	    return (vtime.tv_sec*1000 + vtime.tv_usec/1000.0);
+	    struct timespec vtime;
+	    clock_gettime(CLOCK_MONOTONIC, &vtime);
+	    return (vtime.tv_sec*1000 + vtime.tv_nsec/1000000);
 	};
 public:
 	//Start the timer
