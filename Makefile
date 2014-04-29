@@ -19,7 +19,7 @@ TARGET = $(BIN)/$(APP)
 CPP := g++
 LD := g++
 MAJ_VERSION := 0
-
+MIN_VERSION := $$(cat version.txt)
 
 all: $(TARGET)
 
@@ -32,14 +32,7 @@ $(OBJS):
 $(BIN):
 	mkdir $(BIN)
 
-$(MIN_VERSION): version.txt | $(OBJS)
-	@echo $$(($$(cat $<) + 1)) > $< 
-	@cp $< $@
-	@touch $@
-	@echo Building version: $(MAJ_VERSION).$$(cat $(MIN_VERSION))
-
-
-$(DEPENDENCY): $(CPP_FILES) | $(MIN_VERSION)
+$(DEPENDENCY): $(CPP_FILES) | $(OBJS)
 	rm -f $@
 	$(CPP) $(CFLAGS) -MM $^ >> $@
 
@@ -51,9 +44,10 @@ endif
 endif
 
 $(OBJ_FILES): objs/%.o : %.cpp | $(DEPENDENCY)
-	$(CPP) $(CFLAGS) -DMIN_VERSION=$$(cat $(MIN_VERSION)) -DMAJ_VERSION=$(MAJ_VERSION) -c $< -o $@ 
+	$(CPP) $(CFLAGS) -DMIN_VERSION=$(MIN_VERSION) -DMAJ_VERSION=$(MAJ_VERSION) -c $< -o $@ 
 
 $(TARGET): $(OBJ_FILES) | $(BIN)
+	@echo Build version: $(MAJ_VERSION).$(MIN_VERSION)
 	$(LD) $(OBJ_FILES) -o $@ $(LDFLAGS) 
 
 
