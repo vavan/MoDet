@@ -2,12 +2,13 @@
  * Motion Detection System. VZ Smart Home Initiative
  *
  * Dependency:
- *  OpenCV: https://help.ubuntu.com/community/OpenCV
+ *  OpenCV: apt-get install libopencv-dev
+ *   Old option:  https://help.ubuntu.com/community/OpenCV
  *  JSON: included
- *  Config: apt-get apt-get libconfig++
- *  Logging: apt-get install liblog4cpp
- *  Curl:apt-get install libcurl
- *  TODO - validate
+ *  Config: apt-get install libconfig++8-dev
+ *  Logging: apt-get install liblog4cpp5-dev
+ *  Curl:apt-get install libcurl4-openssl-dev
+ *  
  */
 #include <iostream>
 #include <time.h>
