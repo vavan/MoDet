@@ -17,6 +17,7 @@ Json::Value json_parse(std::string raw_data)
     if ( !reader.parse( raw_data, root ) )
     {
         LOG.error("Json parsing error: "+reader.getFormattedErrorMessages());
+        LOG.error("Json input was: "+raw_data);
     }
     return root;
 }
