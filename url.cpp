@@ -47,8 +47,8 @@ string Url::execute(list<string> headers, string url, string json, bool post)
             curl_easy_setopt(curl, CURLOPT_POST, 1L);
         else
         	curl_easy_setopt(curl, CURLOPT_HTTPGET, 1L);
-        bool verbose = MDConfig::getRoot()["debug"]["verbose"];
-        if (verbose) curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
+        if (isDebug())
+        	curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, Url::callback);
         curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
 

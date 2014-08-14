@@ -21,6 +21,7 @@ class MotionDetector
         Mat diff;
         int lowThreshold;
         int numberNonZero;
+        int percentNonZero;
 
         string deviceId;
         bool show;
@@ -35,6 +36,9 @@ class MotionDetector
 
         //Handle motion detected event. FRAME is the frame with detected motion
         void detected(Mat& frame);
+
+        //update nonZero limit as a percent of the frame
+        void updateNoneZero(Size size);
 
         //build grid mask used for filtration. SIZE is the size of the frame
         void buildMask(Size size);

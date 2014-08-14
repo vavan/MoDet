@@ -31,11 +31,11 @@ MDConfig::MDConfig()
 {
 	try {
 		cfg.readFile(CONFIG_FILE);
-		string version = cfg.getRoot()["version"];
-		if (version != version_name()) {
-			LOG.errorStream() << "Config file VERSION is expected to be: " << version_name();
-			Process::exit();
-		}
+//		string version = cfg.getRoot()["version"];
+//		if (version != version_name()) {
+//			LOG.errorStream() << "Config file VERSION is expected to be: " << version_name();
+//			Process::exit();
+//		}
 	} catch (const libconfig::FileIOException &fioex) {
 		LOG.error("I/O error while reading config file");
 		Process::exit();
@@ -62,6 +62,10 @@ void init_log(string deviceId)
 	else
 		root.setPriority(log4cpp::Priority::DEBUG);
 	root.addAppender(appender);
+}
+
+bool isDebug() {
+	return (LOG.getPriority() >= log4cpp::Priority::DEBUG);
 }
 
 string version_name()

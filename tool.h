@@ -10,6 +10,7 @@
 #define LOG log4cpp::Category::getRoot()
 //Initialization of the log
 void init_log(std::string deviceId="NONE");
+bool isDebug();
 
 /*
  * Major configuration class. Handles reading a config from file and provide access to the fields

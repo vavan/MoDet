@@ -87,7 +87,11 @@ void Process::start(bool isDaemon)
 			LOG.error("Can't setsid");
 			Process::exit();
 		}
-		chdir("/");
+		if (chdir("/") != 0)
+		{
+			LOG.error("Can't chdir");
+			Process::exit();
+		}
 		close(STDIN_FILENO);
 		close(STDOUT_FILENO);
 		close(STDERR_FILENO);

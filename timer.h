@@ -11,6 +11,7 @@ class Timer
 private:
 	time_t last;
 	int timeout;
+
 	//Return timestump since epoch in ms
 	long nowMillisec()
 	{
@@ -19,6 +20,7 @@ private:
 	    return (vtime.tv_sec*1000 + vtime.tv_nsec/1000000);
 	};
 public:
+
 	//Start the timer
 	Timer(int timeout, bool delayedInit = false)
 	{
@@ -28,7 +30,8 @@ public:
 			last = nowMillisec();
 		this->timeout = timeout;
 	};
-	//Is time right? Time to start is right?
+
+	//Should we start?
 	bool isTimeTo()
 	{
 		time_t now = nowMillisec();

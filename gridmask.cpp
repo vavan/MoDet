@@ -23,10 +23,14 @@ Json::Value json_parse(std::string raw_data)
 }
 
 
-void GridMask::build(Size frameSize) 
+void GridMask::build(Size frameSize)
 {
-	mask = Mat::zeros(frameSize, CV_8UC1);
+	if (size.height == 0 || size.width == 0) {
+		LOG.error("Empty mask");
+		return;
+	}
 
+	mask = Mat::zeros(frameSize, CV_8UC1);
 	int row_size = frameSize.height / size.height;
 	int col_size = frameSize.width / size.width;
 	LOG.info("Update mask. Cell is %d x %d pixels", col_size, row_size);

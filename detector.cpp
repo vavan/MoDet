@@ -15,7 +15,7 @@ MotionDetector::MotionDetector(string deviceId): url(deviceId) {
     this->img_path = (const char*)MDConfig::getRoot()["push"]["img_path"];
 
     this->lowThreshold = MDConfig::getRoot()["debug"]["lowThreshold"];
-    this->numberNonZero = MDConfig::getRoot()["debug"]["numberNonZero"];
+    this->percentNonZero = MDConfig::getRoot()["debug"]["nonZero"];
 };
 
 
@@ -41,11 +41,18 @@ string MotionDetector::getFormattedTime()
 	return str;
 }
 
+void MotionDetector::updateNoneZero(Size size)
+{
+	int square = size.height * size.width;
+	this->numberNonZero = square * this->percentNonZero / 10000;
+}
+
 void MotionDetector::buildMask(Size size)
 {
 	string grid = url.getGrid();
 	mask = GridMask::create(grid);
 	mask.build(size);
+	updateNoneZero(size);
 }
 
 void MotionDetector::detected(Mat& frame)
@@ -79,6 +86,8 @@ void MotionDetector::processFrame(InputArray inputFrame, Timer& detection_timeou
 
 	if (show) imshow("MD window", filtered);
 	int nonZero = countNonZero(filtered);
+	//if (nonZero)
+	//	LOG.debugStream() << "Non zero: " << nonZero << ", limit: " << this->numberNonZero;
 	if (nonZero > this->numberNonZero) {
 		if (detection_timeout.isTimeTo()) {
 			detected(currFrameColor);
@@ -96,7 +105,7 @@ bool MotionDetector::run()
 	Mat frame;
 
 	Timer skip_ms = Timer(MDConfig::getRoot()["debug"]["skip_ms"]);
-	Timer mask_ms = Timer(MDConfig::getRoot()["debug"]["mask_ms"]);
+	Timer mask_ms = Timer(MDConfig::getRoot()["debug"]["mask_ms"], true);
 	Timer detection_timeout = Timer(MDConfig::getRoot()["debug"]["detection_timeout"], true);
 
 
@@ -110,7 +119,7 @@ bool MotionDetector::run()
 					LOG.error("retrive() failed");
 					return true;
 				}
-				if (mask.get().empty() || mask_ms.isTimeTo()) {
+				if (mask_ms.isTimeTo()) {
 					buildMask(frame.size());
 				}
 			}
