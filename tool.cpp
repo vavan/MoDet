@@ -40,8 +40,8 @@ MDConfig::MDConfig()
 		LOG.error("I/O error while reading config file");
 		Process::exit();
 	} catch (const libconfig::ParseException &pex) {
-		LOG.errorStream() << "Config parse error at " << pex.getFile() << ":"
-				<< pex.getLine() << " - " << pex.getError();
+                //const char* error = pex.getError();
+		LOG.errorStream() << "Config parse error";// << error;
 		Process::exit();
 	}
 }

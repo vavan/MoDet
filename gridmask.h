@@ -2,7 +2,8 @@
 #define _GRIDMASK_H_
 #include <list>
 #include <string>
-#include <opencv/cv.h>
+#include <opencv2/core/core.hpp>
+
 
 typedef std::list< std::pair<int,int> > MaskInput;
 

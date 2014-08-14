@@ -1,7 +1,8 @@
 #ifndef DETECTOR_H_
 #define DETECTOR_H_
-#include <opencv/highgui.h>
-#include <opencv/cv.h>
+#include <opencv2/core/core.hpp>
+#include <opencv2/highgui/highgui.hpp>
+
 #include "gridmask.h"
 #include "url.h"
 #include "timer.h"

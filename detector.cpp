@@ -1,3 +1,4 @@
+#include "opencv2/imgproc/imgproc.hpp"
 #include "detector.h"
 #include "tool.h"
 #include "process.h"

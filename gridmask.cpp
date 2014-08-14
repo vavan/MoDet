@@ -1,6 +1,5 @@
 #include <iostream>
 #include <stdlib.h>
-#include <opencv/cv.h>
 #include "json/json.h"
 #include "gridmask.h"
 #include "tool.h"

@@ -35,8 +35,8 @@ void runDetection(string& deviceId) {
 		const char* err_msg = e.what();
 		LOG.error("OpenCV exception: %s", err_msg);
 	} catch (libconfig::SettingNotFoundException& e) {
-		const char* err_msg = e.what();
-		LOG.error("Config exception: %s", err_msg);
+		//const char* err_msg = e.what();
+		LOG.error("Config exception: no settings");
 	} catch (std::exception& e) {
 		const char* err_msg = e.what();
 		LOG.error("STD exception: %s", err_msg);
