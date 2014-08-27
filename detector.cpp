@@ -3,7 +3,8 @@
 #include "tool.h"
 #include "process.h"
 #include "timer.h"
-
+#include <sys/stat.h>
+#include <errno.h>
 
 
 
@@ -14,6 +15,19 @@ MotionDetector::MotionDetector(string deviceId): url(deviceId) {
     string stream = MDConfig::getRoot()["stream"];
     this->streamUrl = stream + "/" + deviceId;
     this->img_path = (const char*)MDConfig::getRoot()["push"]["img_path"];
+
+    struct stat st;
+
+    this->img_path += "/" + deviceId;
+    if (stat(this->img_path.c_str(), &st) == -1) {
+	if (errno == ENOENT) {
+            if (!mkdir(this->img_path.c_str(), 0755))
+	        LOG.info("creating directory \"%s\".", this->img_path.c_str());
+	    else
+	        LOG.error("image directory creation failed");
+        } else
+            LOG.error("image directory stat error");
+    }
 
     this->lowThreshold = MDConfig::getRoot()["debug"]["lowThreshold"];
     this->percentNonZero = MDConfig::getRoot()["debug"]["nonZero"];
