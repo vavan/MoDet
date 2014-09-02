@@ -1,0 +1,6 @@
+Package: modet
+Section: httpd
+Architecture: all
+Maintainer: Oleksandr Kozaruk <oleksandr.kozaruk@globallogic.com>
+Priority: optional
+Description: camera motion detection

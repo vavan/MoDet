@@ -50,10 +50,20 @@ $(TARGET): $(OBJ_FILES) | $(BIN)
 	@echo Build version: $(MAJ_VERSION).$(MIN_VERSION)
 	$(LD) $(OBJ_FILES) -o $@ $(LDFLAGS) 
 
+deb: $(TARGET)
+	mkdir -p modet/DEBIAN
+	mkdir -p modet/etc
+	mkdir -p modet/usr/bin
+	mkdir -p package
+	cp $(TARGET) ./modet/usr/bin
+	cp modet.cfg ./modet/etc
+	cp control ./modet/DEBIAN
+	echo 'Version:' $(MIN_VERSION) >> ./modet/DEBIAN/control
+	dpkg-deb -b modet
+	mv modet.deb package
 
 clean:
-	rm -rf $(BIN) $(OBJS)
-
+	rm -rf $(BIN) $(OBJS) modet
 
 install:
 	cp $(TARGET) /usr/bin/
