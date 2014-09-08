@@ -32,14 +32,14 @@ string Url::execute(list<string> headers, string url, string json, bool post)
     curl_global_init(CURL_GLOBAL_ALL);
     curl = curl_easy_init();
 
-    for(list<string>::iterator i = headers.begin(); i != headers.end(); i++)
-    {
-        headerlist = curl_slist_append(headerlist, (*i).c_str());
-    }
-
     if(curl) 
     {
         CURLcode res;
+
+        for(list<string>::iterator i = headers.begin(); i != headers.end(); i++)
+        {
+            headerlist = curl_slist_append(headerlist, (*i).c_str());
+        }
         curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headerlist);
         curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
         curl_easy_setopt(curl, CURLOPT_POSTFIELDS, json.c_str());
