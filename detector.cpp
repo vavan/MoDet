@@ -5,8 +5,6 @@
 #include "timer.h"
 
 
-
-
 MotionDetector::MotionDetector(string deviceId): url(deviceId) {
     this->deviceId = deviceId;
 
@@ -18,6 +16,15 @@ MotionDetector::MotionDetector(string deviceId): url(deviceId) {
     this->lowThreshold = MDConfig::getRoot()["debug"]["lowThreshold"];
     this->percentNonZero = MDConfig::getRoot()["debug"]["nonZero"];
 };
+
+bool MotionDetector::login()
+{
+	string sessionId = url.login();
+    this->streamUrl = this->streamUrl + "?sessionid=" + sessionId;
+    url.setSessionId(sessionId);
+
+	return (!sessionId.empty());
+}
 
 
 VideoCapture MotionDetector::createCapture()
@@ -99,6 +106,10 @@ void MotionDetector::processFrame(InputArray inputFrame, Timer& detection_timeou
 bool MotionDetector::run()
 {
 	LOG.infoStream() << "Start receiving stream from " << this->streamUrl;
+	if (!login()) {
+		LOG.errorStream() << "Login failed";
+		return false;
+	}
 	VideoCapture cap = createCapture();
 	LOG.infoStream() << "Capture object created";
 	if (show) namedWindow("MD window", WINDOW_AUTOSIZE);

@@ -29,6 +29,8 @@ class MotionDetector
         string streamUrl;
         string img_path;
 
+        bool login();
+
         //Create capture object, open stream
         VideoCapture createCapture();
 

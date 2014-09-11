@@ -1,6 +1,6 @@
 #include <iostream>
 #include <stdlib.h>
-#include "json/json.h"
+#include "url.h"
 #include "gridmask.h"
 #include "tool.h"
 
@@ -8,18 +8,6 @@ using namespace cv;
 using namespace std;
 
 
-Json::Value json_parse(std::string raw_data)
-{
-    Json::Value root;   
-    Json::Reader reader;
-
-    if ( !reader.parse( raw_data, root ) )
-    {
-        LOG.error("Json parsing error: "+reader.getFormattedErrorMessages());
-        LOG.error("Json input was: "+raw_data);
-    }
-    return root;
-}
 
 
 void GridMask::build(Size frameSize)
@@ -65,17 +53,3 @@ GridMask GridMask::create(string sRoot)
 	}
     return GridMask( Size(width, height), mi );
 }
-
-
-/*
- * {"device":
- * 	{"id":1,"deviceId":"8484","device_type":"camera","deviceSetup":
- *		"{\"motion_grid\" :
- *			{\"selections\":[{\"row\":1,\"col\":1},{\"row\":2,\"col\":1},{\"row\":3,\"col\":1},{\"row\":4,\"col\":1},{\"row\":1,\"col\":2},{\"row\":2,\"col\":2},{\"row\":3,\"col\":2},{\"row\":4,\"col\":2},{\"row\":1,\"col\":3},{\"row\":2,\"col\":3},{\"row\":3,\"col\":3},{\"row\":4,\"col\":3},{\"row\":1,\"col\":4},{\"row\":2,\"col\":4},{\"row\":3,\"col\":4},{\"row\":4,\"col\":4}],
- *			 \"columns\":10,\"rows\":6
-*			}
-*		}",
-*		"status":true
-*	},"code":0,"message":"Get Device is success.."}
- *
- */

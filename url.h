@@ -3,9 +3,14 @@
 
 #include <string>
 #include <list>
+#include "json/json.h"
 
 
 using namespace std;
+
+
+//Parse given JSON object
+Json::Value json_parse(string raw_data);
 
 /*
  * URL management class. Used for get configuration/data form backend.
@@ -16,6 +21,7 @@ class Url
 private:
 	string db_url;
 	string deviceId;
+    string sessionId;
 
 	//Execute a request using headers, url, json to send to and mode
     string execute(list<string> headers, string url, string json, bool post = true);
@@ -39,6 +45,10 @@ public:
     //Fetch the grid mask from server
     string getGrid();
 
+    //Login and get Session ID from DB
+    string login();
+
+    void setSessionId(string sessionId);
 };
 
 

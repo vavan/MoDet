@@ -6,14 +6,27 @@
 #include "url.h"
 #include "tool.h"
 
+
 //Motion detection event ID
 #define ALERT_TYPE_MOTION "1"
 
+Json::Value json_parse(std::string raw_data)
+{
+    Json::Value root;
+    Json::Reader reader;
+
+    if ( !reader.parse( raw_data, root ) )
+    {
+        LOG.error("Json parsing error: "+reader.getFormattedErrorMessages());
+        LOG.error("Json input was: "+raw_data);
+    }
+    return root;
+}
 
 Url::Url(string deviceId)
 {
 	this->deviceId = deviceId;
-	this->db_url = (const char*)MDConfig::getRoot()["backend"]["database"]["url"];
+	this->db_url = (const char*)MDConfig::getRoot()["backend"]["base_url"];
 }
 
 
@@ -71,11 +84,12 @@ void Url::pushDb(string time, string imgUrl)
 			",\"alertData\": \""+imgUrl+"\""+
 			",\"alertDate\": \""+time+"\"}}";
 
-	string url = MDConfig::getRoot()["push"]["db_url"];
+	string url = MDConfig::getRoot()["push"]["push_endpoint"];
 	url = this->db_url + "/" + url;
 
 	list<string> headers;
     headers.push_back("Content-Type: application/json");
+    headers.push_back("sessionid: " + this->sessionId);
 
 	LOG.debugStream() << "Push json: " << json;
 	LOG.debugStream() << "Push to url: " << url;
@@ -94,14 +108,36 @@ void Url::push(string time, string imageName) {
 
 string Url::getGrid()
 {
-	string url = MDConfig::getRoot()["gridmask"]["db_url"];
+	string url = MDConfig::getRoot()["gridmask"]["mask_endpoint"];
 	url = this->db_url + "/" + url + "/" + deviceId;
 
     LOG.debugStream() << "Get the gridmask from Device URL: " << url;
 
     list<string> headers;
     headers.push_back("Content-Type: application/json");
+    headers.push_back("sessionid: " + this->sessionId);
 
     return this->execute(headers, url, "", false);
 }
 
+string Url::login()
+{
+	string endpoint = MDConfig::getRoot()["backend"]["login_endpoint"];
+	endpoint = this->db_url + "/" + endpoint + "/" + deviceId;
+
+    LOG.debugStream() << "Login to: " << endpoint;
+
+    list<string> headers;
+    headers.push_back("Content-Type: application/json");
+
+    string sRoot = this->execute(headers, endpoint, "", false);
+    Json::Value root = json_parse(sRoot);
+    string sessionid = root.get("sessionid", "").asString();
+    LOG.debugStream() << "Got SessionId: " << sessionid;
+    return sessionid;
+}
+
+void Url::setSessionId(string sessionId)
+{
+	this->sessionId = sessionId;
+}
