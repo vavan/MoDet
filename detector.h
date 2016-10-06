@@ -4,7 +4,6 @@
 #include <opencv2/highgui/highgui.hpp>
 
 #include "gridmask.h"
-#include "url.h"
 #include "timer.h"
 
 using namespace cv;
@@ -18,18 +17,14 @@ class MotionDetector
     private:
         Mat prevFrame;
         GridMask mask;
-        Url url;
         Mat diff;
         int lowThreshold;
         int numberNonZero;
         int percentNonZero;
 
-        string deviceId;
         bool show;
         string streamUrl;
         string img_path;
-
-        bool login();
 
         //Create capture object, open stream
         VideoCapture createCapture();
@@ -51,7 +46,7 @@ class MotionDetector
 
 	public:
         //Ctor for specific device and session
-        MotionDetector(string deviceId);
+        MotionDetector();
 
         //Run detection cycle
         bool run();

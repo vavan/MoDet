@@ -2,7 +2,6 @@ APP = modet
 
 CPP_FILES := \
     main.cpp \
-    url.cpp \
     gridmask.cpp \
     tool.cpp \
     process.cpp \

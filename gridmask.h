@@ -3,9 +3,11 @@
 #include <list>
 #include <string>
 #include <opencv2/core/core.hpp>
+#include "tool.h"
 
 
-typedef std::list< std::pair<int,int> > MaskInput;
+typedef std::vector<std::vector<bool> > Matrix;
+
 
 /*
  * Grid mask for selection. Only motion inside selected area is detected
@@ -13,28 +15,18 @@ typedef std::list< std::pair<int,int> > MaskInput;
 class GridMask
 {
 private:
-    cv::Size size;
-    MaskInput mi;
     cv::Mat mask;
 
+    Matrix readEnabled(libconfig::Config& cfg, const cv::Size& gridSize);
+
 public:
-    //Ctors
+    GridMask(cv::Size frameSize);
     GridMask() {};
-    GridMask(cv::Size size, MaskInput mi)
-    {
-        this->size = size;
-        this->mi = mi;
-    }
-    //Mask getter
+
     cv::Mat get() 
     {
         return this->mask;
     };
-    //Build the cv::Mat based on give FRAME SIZE
-    void build(cv::Size frameSize);
-
-    //Create GridMask object based on selection received from backend
-    static GridMask create(std::string json);
 };
 
 

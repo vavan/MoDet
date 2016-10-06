@@ -23,9 +23,9 @@ using namespace std;
 /*
  * Run detection and handle all the exceptions
  */
-void runDetection(string& deviceId) {
+void runDetection() {
 	try {
-		MotionDetector md = MotionDetector(deviceId);
+		MotionDetector md = MotionDetector();
 		bool running = true;
 		while (running) {
 			running = md.run();
@@ -35,7 +35,6 @@ void runDetection(string& deviceId) {
 		const char* err_msg = e.what();
 		LOG.error("OpenCV exception: %s", err_msg);
 	} catch (libconfig::SettingNotFoundException& e) {
-		//const char* err_msg = e.what();
 		LOG.error("Config exception: no settings");
 	} catch (std::exception& e) {
 		const char* err_msg = e.what();
@@ -51,12 +50,12 @@ void runDetection(string& deviceId) {
 int main(int argc, char**argv) 
 {
 	init_log();
-    if (argc < 3) {
-    	LOG.error("MotDet Error: Wrong command line. USE modet <start|stop> <deviceId> <sessionId>");
+    if (argc < 2) {
+    	LOG.error("MotDet Error: Wrong command line. USE modet <start|stop>");
     	Process::exit();
     }
     string mode(argv[1]);
-    string deviceId(argv[2]);
+    string deviceId("xxx");
 
     Process::init(deviceId);
 
@@ -71,14 +70,14 @@ int main(int argc, char**argv)
     		Process::instance().start();
     	}
     	MDConfig::init();
-	    init_log(deviceId);
+	    init_log();
 
 	    LOG.infoStream() << "Start instance. Version: " << version_name();
-		runDetection(deviceId);
+		runDetection();
 		LOG.info("Stop instance");
 
     } else if (mode == "stop") {
-	    init_log(deviceId);
+	    init_log();
 		LOG.info("Kill instance");
 		Process::instance().kill();
     } else {

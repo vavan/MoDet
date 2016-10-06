@@ -9,7 +9,7 @@
 //Access to the log
 #define LOG log4cpp::Category::getRoot()
 //Initialization of the log
-void init_log(std::string deviceId="NONE");
+void init_log();
 bool isDebug();
 
 /*
@@ -26,6 +26,9 @@ public:
 	static void init() { instance = new MDConfig(); };
 	static libconfig::Setting& getRoot() {
 		return instance->cfg.getRoot();
+	};
+	static libconfig::Config& get() {
+		return instance->cfg;
 	};
 	//Check is the config were initiated and loaded form file
 	static bool valid() {

@@ -2,3 +2,4 @@ bin/
 objs/
 .cproject
 .settings
+modet.log

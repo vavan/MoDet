@@ -15,8 +15,8 @@
 using namespace std;
 
 
-#define CONFIG_FILE "/etc/modet.cfg"
-#define LOG_FILE "/var/log/modet.log"
+#define CONFIG_FILE "./modet.cfg"
+#define LOG_FILE "./modet.log"
 
 #ifndef MAJ_VERSION
 #define MAJ_VERSION 0
@@ -47,12 +47,12 @@ MDConfig::MDConfig()
 }
 
 
-void init_log(string deviceId)
+void init_log()
 {
 	log4cpp::Appender *appender = new log4cpp::FileAppender("default", LOG_FILE);
 	log4cpp::PatternLayout* layout = new log4cpp::PatternLayout();
 	std::stringstream spid; spid << getpid();
-	layout->setConversionPattern("%d "+spid.str()+"-"+deviceId+" [%p] %m%n");
+	layout->setConversionPattern("%d "+spid.str()+" [%p] %m%n");
 	appender->setLayout(layout);
 
 	log4cpp::Category& root = log4cpp::Category::getRoot();
