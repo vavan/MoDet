@@ -8,7 +8,7 @@ CPP_FILES := \
     detector.cpp
 
 CFLAGS := -Wall -Wextra -ggdb -O3 `pkg-config --cflags opencv` -I./include -I./objs
-LDFLAGS := `pkg-config --libs opencv` `curl-config --libs` -ggdb -L./libs -ljson -llog4cpp -lconfig++
+LDFLAGS := `pkg-config --libs opencv` -ggdb -L./libs -llog4cpp -lconfig++
 OBJS := objs
 BIN := bin
 OBJ_FILES := $(addprefix $(OBJS)/,$(CPP_FILES:.cpp=.o))
